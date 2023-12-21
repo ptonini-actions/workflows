@@ -1,0 +1,29 @@
+name: code-linting
+
+on:
+  workflow_call:
+
+jobs:
+  code_linting:
+    runs-on: ubuntu-latest
+    steps:
+      - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+      - run: (dotnet restore -f --no-cache && dotnet build && dotnet format) || true
+        if: github.event.repository.language == 'C#'
+      - run: (yarn && yarn lint && yarn format) || true
+        if: github.event.repository.language == 'TypeScript'
+      - run: go fmt || true
+        if: github.event.repository.language == 'Go'
+      - run: (pip3 install ruff && ruff .) || true
+        if: github.event.repository.language == 'Python'
+      - run: terraform fmt || true
+        if: github.event.repository.language == 'HCL'
+      - uses: ptonini-actions/config-git-user@v1
+      - uses: EndBug/add-and-commit@v9
+        id: commit
+        with:
+          message: "chore: automated linting"

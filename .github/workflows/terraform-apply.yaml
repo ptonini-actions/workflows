@@ -1,0 +1,72 @@
+name: terraform-apply
+
+on:
+  workflow_call:
+    inputs:
+      terraform_plan_filename:
+        description: ''
+        required: false
+        type: string
+        default: plan
+    secrets:
+      OPENVPN_CONFIG:
+        description: ''
+        required: true
+      OPENSTACK_CONFIG:
+        description: ''
+        required: false
+      GH_TOKEN:
+        description: ''
+        required: true
+
+jobs:
+  terraform_apply:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+    steps:
+      - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
+      - uses: actions/checkout@v3
+
+      # Configure terraform
+      - uses: hashicorp/setup-terraform@v2.0.3
+        with:
+          terraform_version: ${{ vars.terraform_version }}
+
+      # Connect to VPN
+      - uses: ptonini-actions/openvpn@v1
+        with:
+          openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
+          validation_addr: ${{ vars.ovpn_validation_addr }}
+
+      # Connect to providers
+      - uses: ptonini-actions/cloud-login@v1
+        with:
+          vault_addr: ${{ vars.vault_addr }}
+          vault_method: ${{ vars.vault_method }}
+          vault_path: ${{ vars.vault_path }}
+          vault_role: ${{ vars.vault_role }}
+          aws_region: ${{ vars.aws_region }}
+          aws_role: ${{ vars.aws_role }}
+          azure_tenant_id: ${{ vars.azure_tenant_id }}
+          azure_subscription_id: ${{ vars.azure_subscription_id }}
+          azure_client_id: ${{ vars.azure_client_id }}
+          openstack_config: ${{ secrets.OPENSTACK_CONFIG }}
+
+      # Initialize terraform
+      - run: terraform init -input=false
+
+      # Fetch approved plan
+      - uses: ptonini-actions/get-labels@v1
+        with:
+          labels: plan_run_id
+      - uses: dawidd6/action-download-artifact@v2
+        with:
+          name: plan
+          run_id: ${{ env.PLANNED_RUN_ID }}
+          github_token: ${{ secrets.GH_TOKEN }}
+
+      # Apply plan
+      - run: terraform apply -auto-approve -input=false ${{ inputs.terraform_plan_filename }}
+        id: apply

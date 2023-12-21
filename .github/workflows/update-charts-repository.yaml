@@ -1,0 +1,23 @@
+name: update-charts-repository
+
+on:
+  workflow_call:
+
+jobs:
+  update_charts_repository:
+    runs-on: ubuntu-latest
+    steps:
+      - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v3
+        with:
+          name: builds
+          path: ${{ github.workspace }}/builds
+      - uses: ptonini-actions/config-git-user@v1
+      - uses: helm/chart-releaser-action@v1.4.1
+        with:
+          install_only: true
+      - run: cr index -p builds -i index.yaml -o ${{ github.repository_owner }} -t ${{ github.token }} -r ${{ github.event.repository.name }} --push --release-name-template "{{ .Name }}-v{{ .Version }}"

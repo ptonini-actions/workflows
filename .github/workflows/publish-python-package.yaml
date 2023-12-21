@@ -1,0 +1,24 @@
+name: publish-python-package
+
+on:
+  workflow_call:
+    inputs:
+      pypi_addr:
+        description: ''
+        default: ${{ vars.pypi_addr }}
+        type: string
+        
+jobs:
+  publish_python_package:
+    runs-on: ubuntu-latest
+    steps:
+      - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ vars.python_version }}
+      - uses: actions/checkout@v3
+      - run: echo "VERSION=$(jq -r '."."' < ${{ vars.rp_manifest_file }})" | tee -a $GITHUB_ENV
+      - run: pip3 install twine
+      - run: python3 setup.py sdist
+      - run: python3 -m twine upload dist/* --verbose --repository-url ${{ inputs.pypi_addr }} --username ${{ github.event.repository.name }} --password ${{ github.token }}

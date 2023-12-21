@@ -1,0 +1,48 @@
+name: apply
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths-ignore:
+      - '.github/**'
+      - '*/*'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  detect_changes:
+    uses: ptonini-actions/workflows/.github/workflows/paths-filter.yaml@main
+    with:
+      filters_cmd: 'find . -mindepth 3 -maxdepth 3 -type d -not -path "*/.*" -exec bash -c "R=\"{}\"; echo \"\${R#./}: \${R#./}/*\"" \;'
+  apply_releases:
+    runs-on: ubuntu-latest
+    if: needs.detect_changes.outputs.changes != '[]'
+    needs:
+      - detect_changes
+    strategy:
+      matrix:
+        path: ${{ fromJSON(needs.detect_changes.outputs.changes) }}
+    steps:
+      - run: env | sort
+      - uses: actions/checkout@v3
+      - run: echo "ENVIRONMENT=$(echo ${{ matrix.release }} | awk -F/ '{print $1}')" | tee -a $GITHUB_ENV
+      - run: echo "VAULT_K8S_ROLE_PATH=$(cat ${{ github.workspace }}/${ENVIRONMENT}/vault_k8s_role_path)" | tee -a $GITHUB_ENV
+      - uses: ptonini-actions/openvpn@main
+        with:
+          openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
+          validation_addr: ${{ vars.vault_addr }}
+      - uses: hashicorp/vault-action@v2
+        with:
+          url: ${{ vars.vault_addr }}
+          method: ${{ vars.vault_method }}
+          path: ${{ vars.vault_path }}
+          role: ${{ vars.vault_role }}
+          secrets: ${{ env.VAULT_K8S_ROLE_PATH }} kube_config | KUBECONFIG;
+      - uses: ptonini-actions/deploy-helm-releases@main
+        with:
+          releases: ${{ github.workspace }}/${{ matrix.release }}
+          kubeconfig_manifest: ${{ env.KUBECONFIG }}

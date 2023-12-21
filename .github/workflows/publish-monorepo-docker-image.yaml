@@ -1,0 +1,26 @@
+name: publish-monorepo-docker-image
+
+on:
+  workflow_call:
+    inputs:
+      path:
+        description: ''
+        required: true
+        type: string
+
+jobs:
+  publish_monorepo_docker_image:
+    runs-on: ubuntu-latest
+    steps:
+      - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
+      - uses: actions/checkout@v3
+      - run: echo "VERSION=$(jq -r '."${{ inputs.path }}"' < ${{ vars.rp_manifest_file }})" | tee -a $GITHUB_ENV
+      - uses: ptonini-actions/publish-docker-image@v1
+        with:
+          registry: ${{ vars.container_registry }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+          repository: ${{ vars.repository_prefix }}/${{ matrix.path }}
+          tags: latest ${{ env.VERSION }}
+          context: ${{ github.workspace }}/${{ matrix.path }}

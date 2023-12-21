@@ -1,0 +1,66 @@
+name: code-testing
+
+on:
+  workflow_call:
+    secrets:
+      SONAR_TOKEN:
+        description: ''
+        required: true
+
+env:
+  REPORTS_FOLDER: reports
+  GO_COVERAGE_PROFILE: coverage.out
+  GO_TEST_REPORT: report.out
+  PYTHON_COVERAGE_REPORT: coverage-report.xml
+  PYTHON_XUNIT_REPORT: xunit-report.xml
+  JAVASCRIPT_LCOV_INFO: lcov.info
+
+jobs:
+  code_testing:
+    runs-on: ubuntu-latest
+    steps:
+      - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - run: mkdir -p ${{ env.REPORTS_FOLDER }} && touch ${{ env.REPORTS_FOLDER }}/.placeholder
+      - uses: ptonini-actions/test-go@v1
+        if: github.event.repository.language == 'Go'
+        with:
+          go_version: ${{ vars.go_version }}
+          reports_folder: ${{ env.REPORTS_FOLDER }}
+          coverage_profile: ${{ env.GO_COVERAGE_PROFILE }}
+          test_report: ${{ env.GO_TEST_REPORT }}
+      - uses: ptonini-actions/test-python@v1
+        if: github.event.repository.language == 'Python'
+        with:
+          python_version: ${{ vars.python_version }}
+          pypi_username: ${{ github.event.repository.name }}
+          pypi_password: ${{ github.token }}
+          reports_folder: ${{ env.REPORTS_FOLDER }}
+          coverage_report: ${{ env.PYTHON_COVERAGE_REPORT }}
+          xunit_report: ${{ env.PYTHON_XUNIT_REPORT }}
+      - uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.organization=${{ github.repository_owner }}
+            -Dsonar.projectName=${{ github.event.repository.name }}
+            -Dsonar.projectKey=${{ github.repository_owner }}_${{ github.event.repository.name }}
+            -Dsonar.go.coverage.reportPaths=${{ env.GO_COVERAGE_PROFILE }}
+            -Dsonar.go.tests.reportPaths=${{ env.GO_TEST_REPORT }}
+            -Dsonar.python.coverage.reportPaths=${{ env.PYTHON_COVERAGE_REPORT }}
+            -Dsonar.python.xunit.reportPath=${{ env.PYTHON_XUNIT_REPORT }}
+            -Dsonar.javascript.lcov.reportPaths=${{ env.JAVASCRIPT_LCOV_INFO }}
+            -Dsonar.sources=.
+            -Dsonar.tests=.
+            -Dsonar.exclusions=demo/**
+            -Dsonar.test.inclusions=**/*_test.go
+        continue-on-error: true
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.REPORTS_FOLDER }}
+          path: ${{ env.REPORTS_FOLDER }}

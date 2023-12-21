@@ -1,0 +1,42 @@
+name: publish-frontend
+
+on:
+  workflow_call:
+    secrets:
+      NPM_TOKEN:
+        description: ''
+        required: false
+    outputs:
+      version:
+        description: ''
+        value: ${{ jobs.publish_frontend.outputs.version }}
+      artifact:
+        description: ''
+        value: ${{ jobs.publish_frontend.outputs.artifact }}
+
+jobs:
+  publish_frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ vars.nodejs_version }}
+      - uses: actions/checkout@v3
+      - run: echo "VERSION=$(jq -r '."."' < ${{ vars.rp_manifest_file }})" | tee -a $GITHUB_ENV
+      - run: echo "ARTIFACT=${{ github.event.repository.name }}-${VERSION}.tgz" | tee -a $GITHUB_ENV
+      - run: yarn install --prod && yarn build
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODIS_DEPLOY_ENVIRONMENT: ${{ vars.deploy_environment }}
+      - run: tar czvf ${ARTIFACT} build
+      - uses: ptonini-actions/upload-release@v1
+        with:
+          file: ${{ env.ARTIFACT }}
+          repo_token: ${{ github.token }}
+          tag: v${{ env.VERSION }}
+          overwrite: true
+    outputs:
+      version: ${{ env.VERSION }}
+      artifact: ${{ env.ARTIFACT }}

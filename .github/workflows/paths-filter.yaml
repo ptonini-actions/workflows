@@ -1,0 +1,36 @@
+name: paths-filter
+
+on:
+  workflow_call:
+    inputs:
+      filters:
+        description: ''
+        default: filters.yaml
+        required: false
+        type: string
+      filters_cmd:
+        description: ''
+        required: false
+        type: string
+    outputs:
+      changes:
+        description: ''
+        value: ${{ jobs.detect_changes.outputs.changes }}
+
+jobs:
+  paths_filter:
+    runs-on: ubuntu-latest
+    steps:
+      - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
+      - uses: actions/checkout@v3
+      - run: jq -r 'keys | reduce .[] as $i ({}; .[$i] = $i+"/**")' ${{ vars.rp_manifest_file }} > ${{ inputs.filters }}
+        if: hashFiles(vars.rp_manifest_file)
+      - run: ${{ inputs.filters_cmd }} > ${{ inputs.filters }}
+        if: inputs.filters_cmd
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: ${{ inputs.filters }}
+    outputs:
+      changes: ${{ steps.filter.outputs.changes }}

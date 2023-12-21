@@ -1,0 +1,45 @@
+name: sync-repositories
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/*
+      - '!.github/workflows/_*'
+      - src/*
+
+jobs:
+  detect_changes:
+    uses: ptonini-actions/workflows/.github/workflows/paths-filter.yaml@main
+    with:
+      filters: |
+        workflows:
+          - '.github/workflows/*'
+        src:
+          - 'src/*'
+  sync_repositories:
+    runs-on: ubuntu-latest
+    if: needs.detect_changes.outputs.changes != '[]'
+    needs:
+      - detect_changes
+    strategy:
+      matrix:
+        repository: ${{ fromJson(vars.child_repositories) }}
+    steps:
+      - run: env | sort
+      - run: sudo apt-get install -y rpl
+      - uses: ptonini-actions/config-git-user@v1
+      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+        with:
+          repository: ${{ matrix.repository }}
+          ssh-key: ${{ secrets.SSH_KEY }}
+          path: child_repository
+      - run: rpl "${{ github.repository }}" "${{ matrix.repository }}" src/*
+      - run: rsync -vr src child_repository
+      - run: rsync -vr --exclude '_*' .github/workflows child_repository/.github
+      - uses: EndBug/add-and-commit@v9
+        with:
+          cwd: ./child_repository
+          message: 'chore: synchronized from ${{ github.repository }} [skip ci]'

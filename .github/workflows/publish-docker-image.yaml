@@ -1,0 +1,44 @@
+name: publish-docker-image
+
+on:
+  workflow_call:
+    inputs:
+      repository:
+        description: ''
+        required: false
+        default: ${{ format('{0}/{1}', vars.container_registry, github.event.repository.name) }}
+        type: string
+      tags:
+        description: ''
+        required: true
+        type: string
+    secrets:
+      BUILD_ARGUMENTS:
+        description: ''
+        required: false
+    outputs:
+      digest:
+        description: ''
+        value: ${{ jobs.publish_docker_image.outputs.digest }}
+
+jobs:
+  publish_docker_image:
+    runs-on: ubuntu-latest
+    steps:
+      - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
+      - uses: actions/checkout@v3
+      - uses: ptonini-actions/publish-docker-image@v1
+        id: publish_image
+        with:
+          registry: ${{ vars.container_registry }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+          repository: ${{ inputs.repository }}
+          tags: ${{ inputs.tags }}
+          build_arguments: ${{ secrets.BUILD_ARGUMENTS }}
+      - uses: ptonini-actions/set-labels@v1
+        with:
+          labels: published
+    outputs:
+      digest: ${{ steps.publish_image.outputs.digest }}

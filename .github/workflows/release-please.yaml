@@ -1,0 +1,26 @@
+name: release-please
+
+on:
+  workflow_call:
+    outputs:
+      releases_created:
+        description: ''
+        value: ${{ jobs.release_please.outputs.releases_created }}
+      paths_released:
+        description: ''
+        value: ${{ jobs.release_please.outputs.paths_released }}
+
+
+jobs:
+  release_please:
+    runs-on: ubuntu-latest
+    outputs:
+      releases_created: ${{ steps.release_please.outputs.releases_created }}
+      paths_released: ${{ steps.release_please.outputs.paths_released }}
+    steps:
+      - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
+      - uses: google-github-actions/release-please-action@v3
+        id: release_please
+        with:
+          command: manifest

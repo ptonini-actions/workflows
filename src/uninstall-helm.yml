@@ -1,0 +1,17 @@
+name: uninstall
+
+concurrency:
+  group: uninstall
+
+on:
+  workflow_dispatch: ~
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  uninstall_release:
+    uses: ptonini-actions/workflows/.github/workflows/uninstall-helm-release.yaml@main
+    secrets:
+      OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}

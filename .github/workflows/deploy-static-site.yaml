@@ -1,0 +1,47 @@
+name: deploy-static-site
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: ''
+        required: true
+        type: string
+      artifact:
+        description: ''
+        required: true
+        type: string
+    secrets:
+      OPENVPN_CONFIG:
+        description: ''
+        required: true
+
+jobs:
+  deploy_static_site:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ vars.aws_region }}
+    steps:
+      - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
+      - uses: ptonini-actions/openvpn@v1
+        with:
+          openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
+          validation_addr: ${{ vars.vault_addr }}
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.aws_role }}
+          aws-region: ${{ vars.aws_region }}
+      - uses: dsaltares/fetch-gh-release-asset@master
+        with:
+          version: tags/v${{ inputs.version }}
+          file: ${{ inputs.artifact }}
+          target: ./${{ inputs.artifact }}
+      - run: tar xzvf ${{ inputs.artifact }}
+      - run: aws s3 sync --delete --acl public-read build "s3://${{ vars.cloudfront_bucket }}/www"
+      - run: |
+          for I in $(jq -c '.[]' <<< "${{ vars.custom_types }}"); do
+            OBJECT=$(jq -r '.object' <<< "${I}")
+            aws s3api put-object --bucket ${{ vars.cloudfront_bucket }} --key www/${OBJECT} --body build/${OBJECT} --content-type $(jq -r '."content-type"' <<< "${I}") --acl public-read
+          done
+      - run: aws cloudfront create-invalidation --distribution-id ${{ vars.cloudfront_distribution }} --paths "/*"

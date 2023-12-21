@@ -1,0 +1,4 @@
+.terraform/
+.idea/
+plan
+terraform.tfvars
