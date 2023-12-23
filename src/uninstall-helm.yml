@@ -12,6 +12,8 @@ permissions:
 
 jobs:
   uninstall_release:
-    uses: ptonini-actions/workflows/.github/workflows/uninstall-helm-release.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/manage-kubernetes.yaml@main
+    with:
+      action: uninstall
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}

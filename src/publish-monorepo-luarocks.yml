@@ -6,7 +6,7 @@ on:
       - main
       - master
     paths:
-      - images/**
+      - rocks/**
 
 jobs:
   detect_changes:
@@ -16,8 +16,9 @@ jobs:
   release_please:
     uses: ptonini-actions/workflows/.github/workflows/release-please.yaml@main
     if: github.event_name == 'push'
-  publish_images:
-    uses: ptonini-actions/workflows/.github/workflows/publish-monorepo-docker-image.yaml@main
+
+  publish_rocks:
+    uses: ptonini-actions/workflows/.github/workflows/publish-monorepo-luarocks.yaml@main
     if: needs.release_please.outputs.paths_released != '[]'
     needs:
       - release_please
@@ -26,3 +27,7 @@ jobs:
         path: ${{ fromJSON(needs.release_please.outputs.paths_released) }}
     with:
       path: ${{ matrix.path }}
+  update_repository:
+    uses: ptonini-actions/workflows/.github/workflows/update-rocks-repository.yaml@main
+    needs:
+      - publish_rocks

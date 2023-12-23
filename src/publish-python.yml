@@ -29,6 +29,6 @@ jobs:
     uses: ptonini-actions/workflows/.github/workflows/release-please.yaml@main
     if: github.event_name == 'push'
 
-  publish_artifact:
+  publish_package:
     uses: ptonini-actions/workflows/.github/workflows/publish-python-package.yaml@main
     if: github.event_name == 'push' && contains(github.event.commits.*.author.name, 'github-actions[bot]')

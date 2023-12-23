@@ -6,7 +6,7 @@ on:
       - main
       - master
     paths:
-      - charts/**
+      - images/**
 
 jobs:
   detect_changes:
@@ -16,8 +16,9 @@ jobs:
   release_please:
     uses: ptonini-actions/workflows/.github/workflows/release-please.yaml@main
     if: github.event_name == 'push'
-  publish_charts:
-    uses: ptonini-actions/workflows/.github/workflows/publish-monorepo-helm-chart.yaml@main
+
+  publish_images:
+    uses: ptonini-actions/workflows/.github/workflows/manage-containers.yaml@main
     if: needs.release_please.outputs.paths_released != '[]'
     needs:
       - release_please
@@ -25,8 +26,6 @@ jobs:
       matrix:
         path: ${{ fromJSON(needs.release_please.outputs.paths_released) }}
     with:
+      repository: ${{ github.event.repository.owner.name }}/${{ matrix.path }}
+      tags: latest %MANIFEST_VERSION%
       path: ${{ matrix.path }}
-  update_repository:
-    uses: ptonini-actions/workflows/.github/workflows/update-charts-repository.yaml@main
-    needs:
-      - publish_charts
