@@ -3,7 +3,17 @@ name: publish-python-package
 on:
   workflow_call:
     inputs:
-      pypi_addr:
+      username:
+        description: ''
+        required: false
+        type: string
+        default: ${{ github.event.repository.name }}
+      password:
+        description: ''
+        required: false
+        type: string
+        default: ${{ github.token }}
+      repository_url:
         description: ''
         default: ${{ vars.pypi_addr }}
         type: string
@@ -18,7 +28,17 @@ jobs:
         with:
           python-version: ${{ vars.python_version }}
       - uses: actions/checkout@v3
-      - run: echo "VERSION=$(jq -r '."."' < ${{ vars.rp_manifest_file }})" | tee -a $GITHUB_ENV
-      - run: pip3 install twine
+
+      # Build package #########################################################
       - run: python3 setup.py sdist
-      - run: python3 -m twine upload dist/* --verbose --repository-url ${{ inputs.pypi_addr }} --username ${{ github.event.repository.name }} --password ${{ github.token }}
+
+      # Upload package to repository ##########################################
+      - uses: pypa/gh-action-pypi-publish@v1.8.11
+        with:
+          user: ${{ inputs.username }}
+          password: ${{ inputs.password }}
+          repository-url: ${{ inputs.repository_url }}
+
+
+
+

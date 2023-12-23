@@ -15,14 +15,24 @@ jobs:
       - run: env | sort
       - run: cat ${GITHUB_EVENT_PATH}
       - uses: actions/checkout@v3
+
+      # Extract chart name from path ##########################################
       - run: echo "CHART=$(basename ${{ inputs.path }})" | tee -a $GITHUB_ENV
+
+      # Extract version from release-please manifest file #####################
       - run: echo "VERSION=$(jq -r '."${{ inputs.path }}"' ${{ vars.rp_manifest_file }})" | tee -a $GITHUB_ENV
+
+      # Generate chart package ################################################
       - run: helm package --dependency-update ${{ inputs.path }}
+
+      # Upload package to release #############################################
       - uses: ptonini-actions/upload-release@v1
         with:
           file: ${{ env.CHART }}-${{ env.VERSION }}.tgz
           tag: ${{ env.CHART }}-v${{ env.VERSION }}
           overwrite: true
+
+      # Upload package to artifact ############################################
       - uses: actions/upload-artifact@v3
         with:
           path: ${{ env.CHART }}-${{ env.VERSION }}.tgz

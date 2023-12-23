@@ -24,13 +24,18 @@ jobs:
       - run: env | sort
       - run: cat ${GITHUB_EVENT_PATH}
       - uses: actions/checkout@v3
+
+      # Generate filters ######################################################
       - run: jq -r 'keys | reduce .[] as $i ({}; .[$i] = $i+"/**")' ${{ vars.rp_manifest_file }} > ${{ inputs.filters }}
         if: hashFiles(vars.rp_manifest_file)
       - run: ${{ inputs.filters_cmd }} > ${{ inputs.filters }}
         if: inputs.filters_cmd
+
+      # Detect updated folders ################################################
       - uses: dorny/paths-filter@v2
         id: filter
         with:
           filters: ${{ inputs.filters }}
+
     outputs:
       changes: ${{ steps.filter.outputs.changes }}

@@ -1,0 +1,108 @@
+name: deploy-helm-releases
+
+on:
+  workflow_call:
+    inputs:
+      action:
+        description: ''
+        required: false
+        type: string
+        default: deploy
+      environment:
+        description: ''
+        required: false
+        type: string
+        default: production
+      digest:
+        description: ''
+        required: false
+        type: string
+    secrets:
+      OPENVPN_CONFIG:
+        description: ''
+        required: false
+      GH_READER_TOKEN:
+        description: ''
+        required: true
+    outputs:
+      staging_host:
+        description: ''
+        value: ${{ jobs.deploy_helm_releases.outputs.staging_host }}
+
+jobs:
+  deploy_helm_releases:
+    environment: ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
+
+      # Connect to VPN ########################################################
+      - if: vars.ovpn_validation_addr != ''
+        uses: ptonini-actions/openvpn@v1
+        with:
+          openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
+          validation_addr: ${{ vars.ovpn_validation_addr }}
+
+      # Login to cloud providers ##############################################
+      - uses: ptonini-actions/cloud-login@v1
+        with:
+          vault_credentials: ${{ vars.vault_credentials }}
+          aws_credentials: ${{ vars.aws_credentials }}
+          azure_credentials: ${{ vars._credentials }}
+          openstack_config: ${{ secrets.OPENSTACK_CONFIG }}
+
+      # Generate kubeconfig file ##############################################
+      - uses: ptonini-actions/get-kubeconfig@v1
+        with:
+          cluster_name: ${{ vars.kubernetes_cluster_name }}
+          kubeconfig_source: ${{ vars.kubeconfig_source }}
+          vault_addr: ${{ vars.vault_addr }}
+          aws_region: ${{ vars.aws_region }}
+          azure_resource_group: ${{ vars.azure_resource_group }}
+
+      # Generate helm release files ###########################################
+      - if: contains('deploy uninstall', inputs.action)
+        uses: ptonini-actions/generate-helm-releases@v1
+        id: releases
+        with:
+          environment: ${{ inputs.environment }}
+          digest: ${{ inputs.digest }}
+          container_registry: ${{ vars.container_registry }}
+          manifest_file: ${{ vars.manifest_file }}
+          manifest_macros: ${{ vars.manifest_macros }}
+          rp_manifest_file: ${{ vars.rp_manifest_file }}
+          staging_domain: ${{ vars.staging_domain }}
+          github_token: ${{ secrets.GH_READER_TOKEN }}
+
+      # Deploy helm releases ##################################################
+      - if: inputs.action == 'deploy'
+        uses: ptonini-actions/manage-helm-releases@v1
+        with:
+          releases: ${{ steps.releases.outputs.releases }}
+
+      # Uninstall helm releases ###############################################
+      - if: inputs.action == 'uninstall'
+        uses: ptonini-actions/manage-helm-releases@v1
+        with:
+          command: uninstall
+          releases: ${{ steps.releases.outputs.releases }}
+
+      # Delete namespace ######################################################
+      - if: inputs.action == 'delete_namespace'
+        uses: ptonini-actions/get-labels@v1
+        with:
+          labels: namespace
+      - if: inputs.action == 'delete_namespace'
+        run: |
+          helm list --short --namespace ${NAMESPACE} | xargs -r helm uninstall --namespace ${NAMESPACE}
+          kubectl delete all --all --namespace ${NAMESPACE}
+          kubectl delete namespace ${NAMESPACE}
+
+      - if: github.event_name == 'pull_request' && steps.releases.outputs.message != ''
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: ${{ steps.releases.outputs.message }}
+
+    outputs:
+      staging_host: ${{ steps.releases.outputs.staging_host }}

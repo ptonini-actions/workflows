@@ -16,10 +16,12 @@ jobs:
       - run: env | sort
       - run: cat ${GITHUB_EVENT_PATH}
       - uses: actions/checkout@v3
+
+      # Execute K6 performance test file ######################################
       - uses: grafana/k6-action@v0.2.0
-        if: hashFiles(vars.k6_test_file)
+        if: hashFiles(vars.performance_test_file)
         with:
-          filename: ${{ vars.k6_test_file }}
+          filename: ${{ vars.performance_test_file }}
         env:
           HOST: ${{ inputs.host }}
           SCHEMA: https

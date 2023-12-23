@@ -14,22 +14,33 @@ jobs:
     steps:
       - run: env | sort
       - run: cat ${GITHUB_EVENT_PATH}
-      - uses: actions/checkout@v3
       - uses: leafo/gh-actions-lua@10
         with:
           luaVersion: ${{ vars.lua_version }}
       - uses: leafo/gh-actions-luarocks@v4
+      - uses: actions/checkout@v3
+
+      # Extract rock name from path ###########################################
       - run: echo "ROCK=$(basename ${{ inputs.path }})" | tee -a $GITHUB_ENV
+
+      # Extract version from release-please manifest file #####################
       - run: echo "VERSION=$(jq -r '."${{ inputs.path }}"' ${{ vars.rp_manifest_file }})" | tee -a $GITHUB_ENV
-      - run: tar -czvC rocks -f ${{ inputs.path }}.tar.gz ${ROCK}
-      - run: envsubst < ${{ inputs.path }}/rockspec > ${ROCK}-${VERSION}-1.rockspec
-      - run: luarocks pack ${ROCK}-${VERSION}-1.rockspec
+
+      # Build rock ############################################################
+      - run: | 
+          tar -czvC rocks -f ${{ inputs.path }}.tar.gz ${ROCK}
+          envsubst < ${{ inputs.path }}/rockspec > ${ROCK}-${VERSION}-1.rockspec
+          luarocks pack ${ROCK}-${VERSION}-1.rockspec
+
+      # Upload rock to release ################################################
       - uses: ptonini-actions/upload-release@v1
         with:
           file: ${{ env.ROCK }}-${{ env.VERSION }}-*
           file_glob: true
           tag: ${{ env.ROCK }}-v${{ env.VERSION }}
           overwrite: true
+
+      # Upload rock to artifact ###############################################
       - uses: actions/upload-artifact@v3
         with:
           name: rocks

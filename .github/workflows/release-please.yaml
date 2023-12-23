@@ -20,6 +20,8 @@ jobs:
     steps:
       - run: env | sort
       - run: cat ${GITHUB_EVENT_PATH}
+
+      # Release-please action #################################################
       - uses: google-github-actions/release-please-action@v3
         id: release_please
         with:

@@ -12,8 +12,13 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - run: test ! -e .trufflehog-ignore || echo 'TRUFFLEHOG_EXTRA_ARGS=--exclude-paths=.trufflehog-ignore' | tee -a $GITHUB_ENV
-      - run: test -z ${RUNNER_DEBUG} || 'TRUFFLEHOG_EXTRA_ARGS+= --debug' | tee -a $GITHUB_ENV
+
+      # Load custom configuration #############################################
+      - run: |
+          [[ ! -e .trufflehog-ignore ]] || echo 'TRUFFLEHOG_EXTRA_ARGS=--exclude-paths=.trufflehog-ignore' | tee -a $GITHUB_ENV
+          [[ -z ${RUNNER_DEBUG} ]] || 'TRUFFLEHOG_EXTRA_ARGS+= --debug' | tee -a $GITHUB_ENV
+
+      # Run security scan #####################################################
       - uses: trufflesecurity/trufflehog@main
         with:
           path: ./

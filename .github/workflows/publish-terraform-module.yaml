@@ -12,9 +12,22 @@ jobs:
   publish-terraform-module:
     runs-on: ubuntu-latest
     steps:
+      - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
+      - uses: hashicorp/setup-terraform@v2.0.3
+        with:
+          terraform_version: ${{ vars.terraform_version }}
       - uses: actions/checkout@v4
+
+      # Initialize module #####################################################
       - run: terraform init
         env:
           TF_TOKEN_app_terraform_io: ${{ secrets.TERRAFORM_CLOUD_TOKEN }}
+
+      # Validate module #######################################################
       - run: terraform validate
-      - uses: RichardInnocent/semantic-versioning-git@v0.0.1
+
+      # Create release ########################################################
+      - uses: ptonini-actions/create-release@v1
+        with:
+          tag_partial_versions: false

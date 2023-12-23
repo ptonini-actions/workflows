@@ -3,7 +3,7 @@ name: terraform-plan
 on:
   workflow_call:
     inputs:
-      terraform_plan_filename:
+      plan_filename:
         description: ''
         required: false
         type: string
@@ -30,20 +30,18 @@ jobs:
     steps:
       - run: env | sort
       - run: cat ${GITHUB_EVENT_PATH}
-      - uses: actions/checkout@v3
-
-      # Configure terraform
       - uses: hashicorp/setup-terraform@v2.0.3
         with:
           terraform_version: ${{ vars.terraform_version }}
+      - uses: actions/checkout@v3
 
-      # Connect to VPN
+      # Connect to VPN ########################################################
       - uses: ptonini-actions/openvpn@v1
         with:
           openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
           validation_addr: ${{ vars.ovpn_validation_addr }}
 
-      # Connect to providers
+      # Connect to providers ##################################################
       - uses: ptonini-actions/cloud-login@v1
         with:
           vault_addr: ${{ vars.vault_addr }}
@@ -57,33 +55,33 @@ jobs:
           azure_client_id: ${{ vars.azure_client_id }}
           openstack_config: ${{ secrets.OPENSTACK_CONFIG }}
 
-      # Initialize terraform
+      # Initialize terraform ##################################################
       - run: terraform init -input=false
       - run: echo '${{ secrets.TFVARS }}' > terraform.tfvars.json
 
-      # Create plan
-      - run: terraform plan -out=${{ inputs.terraform_plan_filename }} -no-color -input=false -detailed-exitcode
+      # Create plan ###########################################################
+      - run: terraform plan -out=${{ inputs.plan_filename }} -no-color -input=false -detailed-exitcode
         id: plan
         continue-on-error: true
 
-      # Generate resumed plan view
-      - run: terraform show -no-color ${{ inputs.terraform_plan_filename }}
+      # Generate resumed plan view ############################################
+      - run: terraform show -no-color ${{ inputs.plan_filename }}
         id: show
         if: hashFiles(inputs.terraform_plan_filename)
 
-      # Save outputs to step summary and pr comments
+      # Save outputs to step summary and pr comments ##########################
       - run: echo '```${{ steps.show.outputs.stdout }}${{ steps.plan.outputs.stderr }}```' >> $GITHUB_STEP_SUMMARY
       - uses: thollander/actions-comment-pull-request@v2
         with:
           message: '```${{ steps.show.outputs.stdout }}${{ steps.plan.outputs.stderr }}```'
           comment_tag: plan_output
 
-      # Upload plan to artifact and set labels
+      # Upload plan to artifact and set labels ################################
       - uses: actions/upload-artifact@v3
         if: steps.plan.outputs.exitcode == '2'
         with:
           name: plan
-          path: ${{ inputs.terraform_plan_filename }}
+          path: ${{ inputs.plan_filename }}
           retention-days: 1
       - uses: ptonini-actions/set-labels@v1
         if: steps.plan.outputs.exitcode == '2'
@@ -94,6 +92,6 @@ jobs:
             plan_created
             plan_run_id: ${{ github.run_id }}
 
-      # Break job if plan failed
+      # Break job if plan has failed ##########################################
       - run: exit 1
         if: steps.plan.outputs.exitcode == '1'

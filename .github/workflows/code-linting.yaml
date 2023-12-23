@@ -9,20 +9,32 @@ jobs:
     steps:
       - run: env | sort
       - run: cat ${GITHUB_EVENT_PATH}
+      - run: sudo wget -qO /usr/local/bin/terragrunt https://github.com/gruntwork-io/terragrunt/releases/latest/download/terragrunt_linux_386 && sudo chmod +x /usr/local/bin/terragrunt
+      - uses: ptonini-actions/config-git-user@v1
       - uses: actions/checkout@v3
         with:
           ref: ${{ github.head_ref }}
+
+      # C# ####################################################################
       - run: (dotnet restore -f --no-cache && dotnet build && dotnet format) || true
         if: github.event.repository.language == 'C#'
+
+      # NodeJS ################################################################
       - run: (yarn && yarn lint && yarn format) || true
         if: github.event.repository.language == 'TypeScript'
+
+      # Go ####################################################################
       - run: go fmt || true
         if: github.event.repository.language == 'Go'
+
+      # Python ################################################################
       - run: (pip3 install ruff && ruff .) || true
         if: github.event.repository.language == 'Python'
-      - run: terraform fmt || true
+
+      # HCL ###################################################################
+      - run: terragrunt hclfmt || true
         if: github.event.repository.language == 'HCL'
-      - uses: ptonini-actions/config-git-user@v1
+
       - uses: EndBug/add-and-commit@v9
         id: commit
         with:
