@@ -17,7 +17,7 @@ jobs:
     uses: ptonini-actions/workflows/.github/workflows/release-please.yaml@main
     if: github.event_name == 'push'
 
-  publish_rocks:
+  publish:
     uses: ptonini-actions/workflows/.github/workflows/publish-monorepo-luarocks.yaml@main
     if: needs.release_please.outputs.paths_released != '[]'
     needs:
@@ -27,7 +27,7 @@ jobs:
         path: ${{ fromJSON(needs.release_please.outputs.paths_released) }}
     with:
       path: ${{ matrix.path }}
-  update_repository:
+  update-repository:
     uses: ptonini-actions/workflows/.github/workflows/repository-updater-lua.yaml@main
     needs:
       - publish_rocks

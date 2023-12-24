@@ -11,6 +11,7 @@ on:
       - closed
     branches:
       - main
+      - master
     paths-ignore:
       - '.github/workflows/*'
 
@@ -21,10 +22,10 @@ permissions:
 
 jobs:
 
-  code_linting:
+  lint:
     uses: ptonini-actions/workflows/.github/workflows/code-linter.yaml@main
     if: contains('opened synchronize', github.event.action) && vars.skip_linting != 'true'
-  security_scan:
+  security-scan:
     uses: ptonini-actions/workflows/.github/workflows/trufflehog.yaml@main
     if: contains('opened synchronize', github.event.action)
 

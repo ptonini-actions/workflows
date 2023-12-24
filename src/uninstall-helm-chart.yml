@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  uninstall_release:
+  uninstall-release:
     uses: ptonini-actions/workflows/.github/workflows/handler-kubernetes.yaml@main
     with:
       action: uninstall

@@ -5,7 +5,6 @@ on:
     branches:
       - master
       - main
-      - legacy/*
   pull_request:
     types:
       - opened
@@ -14,38 +13,43 @@ on:
     branches:
       - master
       - main
-      - legacy/*
 
 jobs:
   
-  code_testing:
-    uses: ptonini-actions/workflows/.github/workflows/code-tester.yaml@main
+  # Code verification #########################################################
+  test:
+    uses: ptonini-actions/workflows/.github/workflows/tester-unit.yaml@main
     if: github.event.action != 'closed' && github.event.head_commit.author.name != 'github-actions[bot]' && vars.skip_testing != 'true'
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-  code_linting:
+  lint:
     uses: ptonini-actions/workflows/.github/workflows/code-linter.yaml@main
     if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action) && vars.skip_linting != 'true'
-  security_scan:
+  security-scan:
     uses: ptonini-actions/workflows/.github/workflows/trufflehog.yaml@main
     if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action)
-  release_please:
+  release-please:
     uses: ptonini-actions/workflows/.github/workflows/release-please.yaml@main
     if: github.event_name == 'push'
   
-  build_container_image:
+  publish-image:
     uses: ptonini-actions/workflows/.github/workflows/handler-containers.yaml@main
     if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action)
     with:
       tags: ${{ format('latest pr{0} pr{0}-{1}', github.event.number, github.run_number) }}
   
-  approve_container_image:
+  approve-image:
     uses: ptonini-actions/workflows/.github/workflows/handler-containers.yaml@main
     if: github.event.pull_request.merged
     with:
+      action: build-push
       source_tag: ${{ format('pr{0}', github.event.number) }}
       tags: latest ${{ vars.pr_approved_tag }} ${{ format('pr{0}', github.event.number) }}
 
-  promote_container_image:
-    uses: ptonini-actions/workflows/.github/workflows/promote-container-image.yaml@main
+  promote-image:
+    uses: ptonini-actions/workflows/.github/workflows/handler-containers.yaml@main
     if: github.event_name == 'push' && contains(github.event.commits.*.author.name, 'github-actions[bot]')
+    with:
+      action: retag
+      source_tag: ${{ vars.pr_approved_tag }}
+      tags: %MANIFEST_VERSION%

@@ -5,31 +5,30 @@ on:
     branches:
       - master
       - main
-      - legacy/*
   pull_request:
     branches:
       - master
       - main
-      - legacy/*
 
 jobs:
   
-  code_testing:
-    uses: ptonini-actions/workflows/.github/workflows/code-tester.yaml@main
+  # Code verification #########################################################
+  test:
+    uses: ptonini-actions/workflows/.github/workflows/tester-unit.yaml@main
     if: github.event.action != 'closed' && github.event.head_commit.author.name != 'github-actions[bot]' && vars.skip_testing != 'true'
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-  code_linting:
+  lint:
     uses: ptonini-actions/workflows/.github/workflows/code-linter.yaml@main
     if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action) && vars.skip_linting != 'true'
-  security_scan:
+  security-scan:
     uses: ptonini-actions/workflows/.github/workflows/trufflehog.yaml@main
     if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action)
-  release_please:
+  release-please:
     uses: ptonini-actions/workflows/.github/workflows/release-please.yaml@main
     if: github.event_name == 'push'
 
-  publish_artifact:
+  publish:
     uses: ptonini-actions/workflows/.github/workflows/publisher-go.yaml@main
     if: github.event_name == 'push' && contains(github.event.commits.*.author.name, 'github-actions[bot]')
       

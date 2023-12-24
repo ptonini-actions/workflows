@@ -1,10 +1,10 @@
-name: update-charts-repository
+name: helm-charts-repository-updater
 
 on:
   workflow_call:
 
 jobs:
-  update_charts_repository:
+  helm-charts-repository-updater:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort

@@ -1,4 +1,4 @@
-name: publish-monorepo-luarock
+name: luarocks-monorepo-publisher
 
 on:
   workflow_call:
@@ -14,7 +14,7 @@ on:
         type: string
 
 jobs:
-  publish_monorepo_luarock:
+  monorepo-publisher:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort

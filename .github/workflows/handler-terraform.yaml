@@ -1,4 +1,4 @@
-name: terraform
+name: terraform-handler
 
 on:
   workflow_call:
@@ -40,7 +40,7 @@ on:
     secrets:
       OPENVPN_CONFIG:
         description: ''
-        required: true
+        required: false
       OPENSTACK_CONFIG:
         description: ''
         required: false
@@ -52,7 +52,7 @@ on:
         required: true
 
 jobs:
-  terraform:
+  terraform-handler:
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -75,7 +75,7 @@ jobs:
         with:
           vault_credentials: ${{ inputs.vault_credentials }}
           aws_credentials: ${{ inputs.aws_credentials }}
-          azure_credentials: ${{ inputs._credentials }}
+          azure_credentials: ${{ inputs.azure_credentials }}
           openstack_config: ${{ secrets.OPENSTACK_CONFIG }}
 
       # Initialize terraform ##################################################

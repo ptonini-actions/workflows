@@ -1,4 +1,4 @@
-name: publish-monorepo-helm-chart
+name: helm-charts-monorepo-publisher
 
 on:
   workflow_call:
@@ -14,7 +14,7 @@ on:
         type: string
 
 jobs:
-  publish_monorepo_helm_chart:
+  monorepo-publisher:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort

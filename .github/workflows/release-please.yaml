@@ -12,7 +12,7 @@ on:
 
 
 jobs:
-  release_please:
+  release-please:
     runs-on: ubuntu-latest
     outputs:
       releases_created: ${{ steps.release_please.outputs.releases_created }}

@@ -1,10 +1,10 @@
-name: update-rocks-repository
+name: luarocks-repository-updater
 
 on:
   workflow_call:
 
 jobs:
-  update_rocks_repository:
+  luarocks-repository-updater:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort

@@ -9,15 +9,15 @@ on:
       - images/**
 
 jobs:
-  detect_changes:
+  detect-changes:
     uses: ptonini-actions/workflows/.github/workflows/paths-filter.yaml@main
     if: github.event_name == 'pull_request'
 
-  release_please:
+  release-please:
     uses: ptonini-actions/workflows/.github/workflows/release-please.yaml@main
     if: github.event_name == 'push'
 
-  publish_images:
+  publish-monorepo-images:
     uses: ptonini-actions/workflows/.github/workflows/handler-containers.yaml@main
     if: needs.release_please.outputs.paths_released != '[]'
     needs:
@@ -26,6 +26,6 @@ jobs:
       matrix:
         path: ${{ fromJSON(needs.release_please.outputs.paths_released) }}
     with:
-      repository: ${{ github.event.repository.owner.name }}/${{ matrix.path }}
+      repository: ${{ github.repository_owner }}/${{ matrix.path }}
       tags: latest %MANIFEST_VERSION%
       path: ${{ matrix.path }}

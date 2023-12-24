@@ -1,4 +1,4 @@
-name: publish-github-action
+name: github-action-publisher
 
 on:
   workflow_call:
@@ -10,7 +10,7 @@ on:
         type: boolean
 
 jobs:
-  publish_github_action:
+  github-action-publisher:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort

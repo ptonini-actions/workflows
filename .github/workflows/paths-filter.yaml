@@ -23,7 +23,7 @@ on:
         value: ${{ jobs.detect_changes.outputs.changes }}
 
 jobs:
-  paths_filter:
+  filter:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort

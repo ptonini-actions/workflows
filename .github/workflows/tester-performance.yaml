@@ -1,4 +1,4 @@
-name: performance-testing
+name: performance-tester
 
 on:
   workflow_call:
@@ -20,7 +20,7 @@ on:
 
 
 jobs:
-  performance_testing:
+  performance-tester:
     timeout-minutes: ${{ inputs.performance_test_timeout }}
     runs-on: ubuntu-latest
     steps:

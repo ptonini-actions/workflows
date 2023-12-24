@@ -1,7 +1,28 @@
-name: code-testing
+name: unit-tester
 
 on:
   workflow_call:
+    inputs:
+      go_version:
+        description: ''
+        required: false
+        default: ${{ vars.go_version }}
+        type: string
+      python_version:
+        description: ''
+        required: false
+        default: ${{ vars.python_version }}
+        type: string
+      pypi_username:
+        description: ''
+        required: false
+        default: ${{ github.event.repository.name }}
+        type: string
+      pypi_password:
+        description: ''
+        required: false
+        default: ${{ github.token }}
+        type: string
     secrets:
       SONAR_TOKEN:
         description: ''
@@ -16,7 +37,7 @@ env:
   JAVASCRIPT_LCOV_INFO: lcov.info
 
 jobs:
-  code_testing:
+  unit-tester:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort
@@ -30,7 +51,7 @@ jobs:
       - uses: ptonini-actions/test-go@v1
         if: github.event.repository.language == 'Go'
         with:
-          go_version: ${{ vars.go_version }}
+          go_version: ${{ inputs.go_version }}
           reports_folder: ${{ env.REPORTS_FOLDER }}
           coverage_profile: ${{ env.GO_COVERAGE_PROFILE }}
           test_report: ${{ env.GO_TEST_REPORT }}
@@ -39,10 +60,10 @@ jobs:
       - uses: ptonini-actions/test-python@v1
         if: github.event.repository.language == 'Python'
         with:
-          python_version: ${{ vars.python_version }}
-          pypi_username: ${{ github.event.repository.name }}
-          pypi_password: ${{ github.token }}
-          reports_folder: ${{ env.REPORTS_FOLDER }}
+          python_version: ${{ inputs.python_version }}
+          pypi_username: ${{ inputs.pypi_username }}
+          pypi_password: ${{ inputs.pypi_username }}
+          reports_folder: ${{ env.pypi_password }}
           coverage_report: ${{ env.PYTHON_COVERAGE_REPORT }}
           xunit_report: ${{ env.PYTHON_XUNIT_REPORT }}
 

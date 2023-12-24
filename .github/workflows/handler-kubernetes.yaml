@@ -1,4 +1,4 @@
-name: deploy-helm-releases
+name: kubernetes_handler
 
 on:
   workflow_call:
@@ -6,7 +6,7 @@ on:
       action:
         description: ''
         required: false
-        default: deploy
+        default: deploy helm
         type: string
       environment:
         description: ''
@@ -62,7 +62,7 @@ on:
         required: false
         default: ${{ vars.kubeconfig_source }}
         type: string
-      container_registry: # ${{ vars. }}
+      container_registry:
         description: ''
         required: false
         default: ${{ vars.container_registry }}
@@ -87,6 +87,11 @@ on:
         required: false
         default: ${{ vars.staging_domain }}
         type: string
+      helm_max_history:
+        description: ''
+        required: false
+        default: 3
+        type: number
     secrets:
       OPENVPN_CONFIG:
         description: ''
@@ -97,12 +102,14 @@ on:
     outputs:
       staging_host:
         description: ''
-        value: ${{ jobs.deploy_helm_releases.outputs.staging_host }}
+        value: ${{ jobs.kubernetes-handler.outputs.staging_host }}
 
 jobs:
-  deploy_helm_releases:
+  kubernetes-handler:
     environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest
+    env:
+      VAULT_ADDR: ${{ inputs.vault_addr }}
     steps:
       - run: env | sort
       - run: cat ${GITHUB_EVENT_PATH}
@@ -120,7 +127,6 @@ jobs:
           vault_credentials: ${{ inputs.vault_credentials }}
           aws_credentials: ${{ inputs.aws_credentials }}
           azure_credentials: ${{ inputs.azure_credentials }}
-          openstack_config: ${{ secrets.OPENSTACK_CONFIG }}
 
       # Generate kubeconfig file ##############################################
       - uses: ptonini-actions/get-kubeconfig@v1
@@ -132,7 +138,7 @@ jobs:
           azure_resource_group: ${{ inputs.azure_resource_group }}
 
       # Generate helm release files ###########################################
-      - if: contains('deploy uninstall', inputs.action)
+      - if: contains(inputs.action, 'helm')
         uses: ptonini-actions/generate-helm-releases@v1
         id: releases
         with:
@@ -145,25 +151,26 @@ jobs:
           staging_domain: ${{ inputs.staging_domain }}
           github_token: ${{ secrets.GH_READER_TOKEN }}
 
-      # Deploy helm releases ##################################################
-      - if: inputs.action == 'deploy'
-        uses: ptonini-actions/manage-helm-releases@v1
-        with:
-          releases: ${{ steps.releases.outputs.releases }}
-
-      # Uninstall helm releases ###############################################
-      - if: inputs.action == 'uninstall'
-        uses: ptonini-actions/manage-helm-releases@v1
-        with:
-          command: uninstall
-          releases: ${{ steps.releases.outputs.releases }}
+      # Handle helm releases ##################################################
+      - if: contains(inputs.action, 'helm')
+        name: ${{ inputs.action }} chart ${{ github.event.repository.name }}
+        run: |
+          for RELEASE in ${{ steps.releases.outputs.releases }}; do
+            source "${RELEASE}/parameters"
+            if [[ "${{ inputs.action }}" =~ "deploy" ]]; then
+              helm upgrade -i ${RELEASE_NAME} ${CHART} -n ${NAMESPACE} --values "${RELEASE}/values" --version ${CHART_VERSION} --repo ${REPOSITORY} --history-max ${{ inputs.helm_max_history }} ${EXTRA_ARGS} --debug
+            else if [[ "${{ inputs.action }}" =~ "uninstall" ]]; then
+              helm uninstall ${RELEASE_NAME} ${CHART} -n ${NAMESPACE}
+            fi
+          done
 
       # Delete namespace ######################################################
-      - if: inputs.action == 'delete_namespace'
+      - if: inputs.action == 'delete namespace'
         uses: ptonini-actions/get-labels@v1
         with:
           labels: namespace
-      - if: inputs.action == 'delete_namespace'
+      - if: inputs.action == 'delete namespace'
+        name: delete staging namespace ${{ env.NAMESPACE }}
         run: |
           helm list --short --namespace ${NAMESPACE} | xargs -r helm uninstall --namespace ${NAMESPACE}
           kubectl delete all --all --namespace ${NAMESPACE}

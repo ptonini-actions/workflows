@@ -1,4 +1,4 @@
-name: manage-containers
+name: container-handler
 
 on:
   workflow_call:
@@ -53,10 +53,10 @@ on:
     outputs:
       digest:
         description: ''
-        value: ${{ jobs.publish_docker_image.outputs.digest }}
+        value: ${{ jobs.container-handler.outputs.digest }}
 
 jobs:
-  manage-containers:
+  container-handler:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort
@@ -105,7 +105,7 @@ jobs:
       - if: inputs.action = 'retag'
         run: |
           for TAG in ${{ env.TAGS }}; do
-            docker buildx imagetools create ${{ inputs.repository }}:${{ inputs.source_tag }} --tag ${{ inputs.repository }}:${TAG}
+            docker buildx imagetools create ${{ inputs.repository }}:${{ inputs.source_tag }} --tag ${TAG}
           done
         env:
           IFS: ,

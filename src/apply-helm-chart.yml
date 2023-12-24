@@ -11,8 +11,10 @@ permissions:
   contents: read
 
 jobs:
-  apply_release:
+  apply-helm-chart:
     uses: ptonini-actions/workflows/.github/workflows/handler-kubernetes.yaml@main
+    with:
+      action: deploy helm
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
       GH_READER_TOKEN: ${{ secrets.GH_READER_TOKEN }}

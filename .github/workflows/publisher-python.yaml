@@ -1,4 +1,4 @@
-name: publish-python-package
+name: python-package-publisher
 
 on:
   workflow_call:
@@ -23,7 +23,7 @@ on:
         type: string
         
 jobs:
-  publish_python_package:
+  python-package-publisher:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort
