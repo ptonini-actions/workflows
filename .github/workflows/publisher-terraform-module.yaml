@@ -2,6 +2,12 @@ name: publish-terraform-module
 
 on:
   workflow_call:
+    inputs:
+      tag_partial_versions:
+        description: ''
+        required: false
+        default: false
+        type: boolean
     secrets:
       TERRAFORM_CLOUD_TOKEN:
         description: ''
@@ -30,4 +36,4 @@ jobs:
       # Create release ########################################################
       - uses: ptonini-actions/create-release@v1
         with:
-          tag_partial_versions: false
+          tag_partial_versions: ${{ inputs.tag_partial_versions }}

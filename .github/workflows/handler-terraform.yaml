@@ -1,8 +1,12 @@
-name: terraform-plan
+name: terraform
 
 on:
   workflow_call:
     inputs:
+      action:
+        description: ''
+        required: true
+        type: string
       plan_filename:
         description: ''
         required: false
@@ -23,7 +27,7 @@ on:
         required: true
 
 jobs:
-  terraform_plan:
+  terraform:
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -41,18 +45,12 @@ jobs:
           openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
           validation_addr: ${{ vars.ovpn_validation_addr }}
 
-      # Connect to providers ##################################################
+      # Login to cloud providers ##############################################
       - uses: ptonini-actions/cloud-login@v1
         with:
-          vault_addr: ${{ vars.vault_addr }}
-          vault_method: ${{ vars.vault_method }}
-          vault_path: ${{ vars.vault_path }}
-          vault_role: ${{ vars.vault_role }}
-          aws_region: ${{ vars.aws_region }}
-          aws_role: ${{ vars.aws_role }}
-          azure_tenant_id: ${{ vars.azure_tenant_id }}
-          azure_subscription_id: ${{ vars.azure_subscription_id }}
-          azure_client_id: ${{ vars.azure_client_id }}
+          vault_credentials: ${{ vars.vault_credentials }}
+          aws_credentials: ${{ vars.aws_credentials }}
+          azure_credentials: ${{ vars._credentials }}
           openstack_config: ${{ secrets.OPENSTACK_CONFIG }}
 
       # Initialize terraform ##################################################
@@ -60,38 +58,58 @@ jobs:
       - run: echo '${{ secrets.TFVARS }}' > terraform.tfvars.json
 
       # Create plan ###########################################################
-      - run: terraform plan -out=${{ inputs.plan_filename }} -no-color -input=false -detailed-exitcode
+      - if: inputs.action == 'plan'
+        run: terraform plan -out=${{ inputs.plan_filename }} -no-color -input=false -detailed-exitcode
         id: plan
         continue-on-error: true
 
       # Generate resumed plan view ############################################
-      - run: terraform show -no-color ${{ inputs.plan_filename }}
+      - if: inputs.action == 'plan' && hashFiles(inputs.terraform_plan_filename)
+        run: terraform show -no-color ${{ inputs.plan_filename }}
         id: show
-        if: hashFiles(inputs.terraform_plan_filename)
 
       # Save outputs to step summary and pr comments ##########################
-      - run: echo '```${{ steps.show.outputs.stdout }}${{ steps.plan.outputs.stderr }}```' >> $GITHUB_STEP_SUMMARY
-      - uses: thollander/actions-comment-pull-request@v2
+      - if: inputs.action == 'plan'
+        run: echo '```${{ steps.show.outputs.stdout }}${{ steps.plan.outputs.stderr }}```' >> $GITHUB_STEP_SUMMARY
+      - if: inputs.action == 'plan'
+        uses: thollander/actions-comment-pull-request@v2
         with:
           message: '```${{ steps.show.outputs.stdout }}${{ steps.plan.outputs.stderr }}```'
           comment_tag: plan_output
 
       # Upload plan to artifact and set labels ################################
-      - uses: actions/upload-artifact@v3
-        if: steps.plan.outputs.exitcode == '2'
+      - if: inputs.action == 'plan' && steps.plan.outputs.exitcode == '2'
+        uses: actions/upload-artifact@v3
         with:
           name: plan
           path: ${{ inputs.plan_filename }}
           retention-days: 1
-      - uses: ptonini-actions/set-labels@v1
-        if: steps.plan.outputs.exitcode == '2'
+      - if: inputs.action == 'plan' && steps.plan.outputs.exitcode == '2'
+        uses: ptonini-actions/set-labels@v1
         with:
           overwrite: true
           github_token: ${{ secrets.GH_TOKEN }}
-          labels: | 
+          labels: |
             plan_created
             plan_run_id: ${{ github.run_id }}
 
       # Break job if plan has failed ##########################################
-      - run: exit 1
-        if: steps.plan.outputs.exitcode == '1'
+      - if: inputs.action == 'plan' && steps.plan.outputs.exitcode == '1'
+        run: exit 1
+
+      # Fetch approved plan ###################################################
+      - if: inputs.action == 'apply'
+        uses: ptonini-actions/get-labels@v1
+        with:
+          labels: plan_run_id
+      - if: inputs.action == 'apply'
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          name: plan
+          run_id: ${{ env.PLANNED_RUN_ID }}
+          github_token: ${{ secrets.GH_TOKEN }}
+
+      # Apply plan ############################################################
+      - if: inputs.action == 'apply'
+        run: terraform apply -auto-approve -input=false ${{ inputs.plan_filename }}
+        id: apply
