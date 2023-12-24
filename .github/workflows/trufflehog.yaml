@@ -13,7 +13,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Load custom configuration #############################################
+      # Load extra arguments ##################################################
       - run: |
           [[ ! -e .trufflehog-ignore ]] || echo 'TRUFFLEHOG_EXTRA_ARGS=--exclude-paths=.trufflehog-ignore' | tee -a $GITHUB_ENV
           [[ -z ${RUNNER_DEBUG} ]] || 'TRUFFLEHOG_EXTRA_ARGS+= --debug' | tee -a $GITHUB_ENV

@@ -1,4 +1,4 @@
-name: publish-go-application
+name: publisher-go
 
 on:
   workflow_call:
@@ -8,9 +8,24 @@ on:
         default: ${{ github.event.repository.name }}
         required: false
         type: string
+      rp_manifest_file:
+        description: ''
+        required: false
+        default: ${{ vars.rp_manifest_file }}
+        type: string
+      go_builder_image:
+        description: ''
+        required: false
+        default: ${{ vars.go_builder_image }}
+        type: string
+      go_main_file:
+        description: ''
+        required: false
+        default: ${{ vars.go_main_file }}
+        type: string
 
 jobs:
-  publish_go_application:
+  publisher_go:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort
@@ -18,12 +33,12 @@ jobs:
       - uses: actions/checkout@v3
 
       # Extract version from release-please manifest file #####################
-      - run: echo "VERSION=$(jq -r '."."' < ${{ vars.rp_manifest_file }})" | tee -a $GITHUB_ENV
+      - run: echo "VERSION=$(jq -r '."."' < ${{ inputs.rp_manifest_file }})" | tee -a $GITHUB_ENV
 
       # Compile application and create checksum ###############################
       - run: | 
           mkdir dist
-          docker run -v $(pwd):$(pwd) -w $(pwd) ${{ vars.go_builder_image }} go build -o dist/${{ inputs.app_name }} ${{ vars.go_main_file }}
+          docker run -v $(pwd):$(pwd) -w $(pwd) ${{ inputs.go_builder_image }} go build -o dist/${{ inputs.app_name }} ${{ inputs.go_main_file }}
           sha256sum dist/${{ inputs.app_name }} > dist/SHA256SUMS
 
       # Upload artifact to release ############################################

@@ -17,6 +17,10 @@ on:
         description: ''
         default: ${{ vars.pypi_addr }}
         type: string
+      python_version:
+        description: ''
+        default: ${{ vars.python_version }}
+        type: string
         
 jobs:
   publish_python_package:
@@ -26,7 +30,7 @@ jobs:
       - run: cat ${GITHUB_EVENT_PATH}
       - uses: actions/setup-python@v4
         with:
-          python-version: ${{ vars.python_version }}
+          python-version: ${{ inputs.python_version }}
       - uses: actions/checkout@v3
 
       # Build package #########################################################

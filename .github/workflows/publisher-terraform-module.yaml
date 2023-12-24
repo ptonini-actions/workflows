@@ -8,6 +8,11 @@ on:
         required: false
         default: false
         type: boolean
+      terraform_version:
+        description: ''
+        required: false
+        default: ${{ vars.terraform_version }}
+        type: string
     secrets:
       TERRAFORM_CLOUD_TOKEN:
         description: ''
@@ -22,7 +27,7 @@ jobs:
       - run: cat ${GITHUB_EVENT_PATH}
       - uses: hashicorp/setup-terraform@v2.0.3
         with:
-          terraform_version: ${{ vars.terraform_version }}
+          terraform_version: ${{ inputs.terraform_version }}
       - uses: actions/checkout@v4
 
       # Initialize module #####################################################

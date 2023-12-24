@@ -6,16 +6,86 @@ on:
       action:
         description: ''
         required: false
-        type: string
         default: deploy
+        type: string
       environment:
         description: ''
         required: false
-        type: string
         default: production
+        type: string
       digest:
         description: ''
         required: false
+        type: string
+      ovpn_validation_addr:
+        description: ''
+        required: false
+        default: ${{ vars.ovpn_validation_addr }}
+        type: string
+      vault_addr:
+        description: ''
+        required: false
+        default: ${{ vars.vault_addr }}
+        type: string
+      vault_credentials:
+        description: ''
+        required: false
+        default: ${{ vars.vault_credentials }}
+        type: string
+      aws_credentials:
+        description: ''
+        required: false
+        default: ${{ vars.aws_credentials }}
+        type: string
+      aws_region:
+        description: ''
+        required: false
+        default: ${{ vars.aws_region }}
+        type: string
+      azure_credentials:
+        description: ''
+        required: false
+        default: ${{ vars.azure_credentials }}
+        type: string
+      azure_resource_group:
+        description: ''
+        required: false
+        default: ${{ vars.azure_resource_group }}
+        type: string
+      kubernetes_cluster_name:
+        description: ''
+        required: false
+        default: ${{ vars.kubernetes_cluster_name }}
+        type: string
+      kubeconfig_source:
+        description: ''
+        required: false
+        default: ${{ vars.kubeconfig_source }}
+        type: string
+      container_registry: # ${{ vars. }}
+        description: ''
+        required: false
+        default: ${{ vars.container_registry }}
+        type: string
+      manifest_file:
+        description: ''
+        required: false
+        default: ${{ vars.manifest_file }}
+        type: string
+      manifest_macros:
+        description: ''
+        required: false
+        default: ${{ vars.manifest_macros }}
+        type: string
+      rp_manifest_file:
+        description: ''
+        required: false
+        default: ${{ vars.rp_manifest_file }}
+        type: string
+      staging_domain:
+        description: ''
+        required: false
+        default: ${{ vars.staging_domain }}
         type: string
     secrets:
       OPENVPN_CONFIG:
@@ -38,28 +108,28 @@ jobs:
       - run: cat ${GITHUB_EVENT_PATH}
 
       # Connect to VPN ########################################################
-      - if: vars.ovpn_validation_addr != ''
+      - if: inputs.ovpn_validation_addr != ''
         uses: ptonini-actions/openvpn@v1
         with:
           openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
-          validation_addr: ${{ vars.ovpn_validation_addr }}
+          validation_addr: ${{ inputs.ovpn_validation_addr }}
 
       # Login to cloud providers ##############################################
       - uses: ptonini-actions/cloud-login@v1
         with:
-          vault_credentials: ${{ vars.vault_credentials }}
-          aws_credentials: ${{ vars.aws_credentials }}
-          azure_credentials: ${{ vars._credentials }}
+          vault_credentials: ${{ inputs.vault_credentials }}
+          aws_credentials: ${{ inputs.aws_credentials }}
+          azure_credentials: ${{ inputs.azure_credentials }}
           openstack_config: ${{ secrets.OPENSTACK_CONFIG }}
 
       # Generate kubeconfig file ##############################################
       - uses: ptonini-actions/get-kubeconfig@v1
         with:
-          cluster_name: ${{ vars.kubernetes_cluster_name }}
-          kubeconfig_source: ${{ vars.kubeconfig_source }}
-          vault_addr: ${{ vars.vault_addr }}
-          aws_region: ${{ vars.aws_region }}
-          azure_resource_group: ${{ vars.azure_resource_group }}
+          cluster_name: ${{ inputs.kubernetes_cluster_name }}
+          kubeconfig_source: ${{ inputs.kubeconfig_source }}
+          vault_addr: ${{ inputs.vault_addr }}
+          aws_region: ${{ inputs.aws_region }}
+          azure_resource_group: ${{ inputs.azure_resource_group }}
 
       # Generate helm release files ###########################################
       - if: contains('deploy uninstall', inputs.action)
@@ -68,11 +138,11 @@ jobs:
         with:
           environment: ${{ inputs.environment }}
           digest: ${{ inputs.digest }}
-          container_registry: ${{ vars.container_registry }}
-          manifest_file: ${{ vars.manifest_file }}
-          manifest_macros: ${{ vars.manifest_macros }}
-          rp_manifest_file: ${{ vars.rp_manifest_file }}
-          staging_domain: ${{ vars.staging_domain }}
+          container_registry: ${{ inputs.container_registry }}
+          manifest_file: ${{ inputs.manifest_file }}
+          manifest_macros: ${{ inputs.manifest_macros }}
+          rp_manifest_file: ${{ inputs.rp_manifest_file }}
+          staging_domain: ${{ inputs.staging_domain }}
           github_token: ${{ secrets.GH_READER_TOKEN }}
 
       # Deploy helm releases ##################################################

@@ -12,6 +12,31 @@ on:
         required: false
         type: string
         default: plan
+      terraform_version:
+        description: ''
+        required: false
+        default: ${{ vars.terraform_version }}
+        type: string
+      ovpn_validation_addr:
+        description: ''
+        required: false
+        default: ${{ vars.ovpn_validation_addr }}
+        type: string
+      vault_credentials:
+        description: ''
+        required: false
+        default: ${{ vars.vault_credentials }}
+        type: string
+      aws_credentials:
+        description: ''
+        required: false
+        default: ${{ vars.aws_credentials }}
+        type: string
+      azure_credentials:
+        description: ''
+        required: false
+        default: ${{ vars.azure_credentials }}
+        type: string
     secrets:
       OPENVPN_CONFIG:
         description: ''
@@ -36,21 +61,21 @@ jobs:
       - run: cat ${GITHUB_EVENT_PATH}
       - uses: hashicorp/setup-terraform@v2.0.3
         with:
-          terraform_version: ${{ vars.terraform_version }}
+          terraform_version: ${{ inputs.terraform_version }}
       - uses: actions/checkout@v3
 
       # Connect to VPN ########################################################
       - uses: ptonini-actions/openvpn@v1
         with:
           openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
-          validation_addr: ${{ vars.ovpn_validation_addr }}
+          validation_addr: ${{ inputs.ovpn_validation_addr }}
 
       # Login to cloud providers ##############################################
       - uses: ptonini-actions/cloud-login@v1
         with:
-          vault_credentials: ${{ vars.vault_credentials }}
-          aws_credentials: ${{ vars.aws_credentials }}
-          azure_credentials: ${{ vars._credentials }}
+          vault_credentials: ${{ inputs.vault_credentials }}
+          aws_credentials: ${{ inputs.aws_credentials }}
+          azure_credentials: ${{ inputs._credentials }}
           openstack_config: ${{ secrets.OPENSTACK_CONFIG }}
 
       # Initialize terraform ##################################################

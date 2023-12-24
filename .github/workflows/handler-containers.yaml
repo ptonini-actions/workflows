@@ -41,6 +41,11 @@ on:
         required: false
         default: '.'
         type: string
+      rp_manifest_file:
+        description: ''
+        required: false
+        default: ${{ vars.rp_manifest_file }}
+        type: string
     secrets:
       BUILD_ARGUMENTS:
         description: ''
@@ -70,7 +75,7 @@ jobs:
       - run: | 
           export TAGS
           for T in ${{ inputs.tags }}; do
-            [[ ${T} == "%MANIFEST_FILE%"]] && T=$(jq -r '."${{ inputs.path }}"' < ${{ vars.rp_manifest_file }})"
+            [[ ${T} == "%MANIFEST_FILE%"]] && T=$(jq -r '."${{ inputs.path }}"' < ${{ inputs.rp_manifest_file }})"
             TAGS=${{ inputs.repository }}:${T},${TAGS}
           done
           echo "TAGS=${TAGS}" | tee -a $GITHUB_ENV

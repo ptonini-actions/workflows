@@ -12,6 +12,11 @@ on:
         description: ''
         required: false
         type: string
+      rp_manifest_file:
+        description: ''
+        required: false
+        default: ${{ vars.rp_manifest_file }}
+        type: string
     outputs:
       changes:
         description: ''
@@ -27,7 +32,7 @@ jobs:
 
       # Generate filters ######################################################
       - run: jq -r 'keys | reduce .[] as $i ({}; .[$i] = $i+"/**")' ${{ vars.rp_manifest_file }} > ${{ inputs.filters }}
-        if: hashFiles(vars.rp_manifest_file)
+        if: hashFiles(inputs.rp_manifest_file)
       - run: ${{ inputs.filters_cmd }} > ${{ inputs.filters }}
         if: inputs.filters_cmd
 
