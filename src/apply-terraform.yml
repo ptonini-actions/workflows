@@ -22,15 +22,17 @@ permissions:
 jobs:
 
   code_linting:
-    uses: ptonini-actions/workflows/.github/workflows/code-linting.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/code-linter.yaml@main
     if: contains('opened synchronize', github.event.action) && vars.skip_linting != 'true'
   security_scan:
     uses: ptonini-actions/workflows/.github/workflows/trufflehog.yaml@main
     if: contains('opened synchronize', github.event.action)
 
   plan:
-    uses: ptonini-actions/workflows/.github/workflows/terraform-plan.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/handler-terraform.yaml@main
     if: contains('opened synchronize', github.event.action)
+    with:
+      action: plan
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
       OPENSTACK_CONFIG: ${{ secrets.OPENSTACK_CONFIG }}
@@ -38,8 +40,10 @@ jobs:
       TFVARS: ${{ secrets.TFVARS }}
 
   apply:
-    uses: ptonini-actions/workflows/.github/workflows/terraform-apply.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/handler-terraform.yaml@main
     if: github.event.pull_request.merged && contains(github.event.pull_request.labels.*.name, 'plan_created')
+    with:
+      action: apply
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
       OPENSTACK_CONFIG: ${{ secrets.OPENSTACK_CONFIG }}

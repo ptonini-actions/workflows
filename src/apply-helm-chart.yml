@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   apply_release:
-    uses: ptonini-actions/workflows/.github/workflows/manage-kubernetes.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/handler-kubernetes.yaml@main
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
       GH_READER_TOKEN: ${{ secrets.GH_READER_TOKEN }}

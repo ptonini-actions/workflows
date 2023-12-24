@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   uninstall_release:
-    uses: ptonini-actions/workflows/.github/workflows/manage-kubernetes.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/handler-kubernetes.yaml@main
     with:
       action: uninstall
     secrets:

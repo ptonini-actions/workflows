@@ -11,6 +11,6 @@ permissions:
 
 jobs:
   publish:
-    uses: ptonini-actions/workflows/.github/workflows/publish-terraform-module.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/publisher-terraform-module.yaml@main
     secrets:
       TERRAFORM_CLOUD_TOKEN: ${{ secrets.TERRAFORM_CLOUD_TOKEN }}

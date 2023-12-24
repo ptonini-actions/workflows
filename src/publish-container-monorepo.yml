@@ -18,7 +18,7 @@ jobs:
     if: github.event_name == 'push'
 
   publish_images:
-    uses: ptonini-actions/workflows/.github/workflows/manage-containers.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/handler-containers.yaml@main
     if: needs.release_please.outputs.paths_released != '[]'
     needs:
       - release_please

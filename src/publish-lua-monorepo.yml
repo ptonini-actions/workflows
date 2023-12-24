@@ -6,7 +6,7 @@ on:
       - main
       - master
     paths:
-      - charts/**
+      - rocks/**
 
 jobs:
   detect_changes:
@@ -17,8 +17,8 @@ jobs:
     uses: ptonini-actions/workflows/.github/workflows/release-please.yaml@main
     if: github.event_name == 'push'
 
-  publish_charts:
-    uses: ptonini-actions/workflows/.github/workflows/publish-monorepo-chart.yaml@main
+  publish_rocks:
+    uses: ptonini-actions/workflows/.github/workflows/publish-monorepo-luarocks.yaml@main
     if: needs.release_please.outputs.paths_released != '[]'
     needs:
       - release_please
@@ -28,6 +28,6 @@ jobs:
     with:
       path: ${{ matrix.path }}
   update_repository:
-    uses: ptonini-actions/workflows/.github/workflows/update-charts-repository.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/repository-updater-lua.yaml@main
     needs:
-      - publish_charts
+      - publish_rocks

@@ -10,4 +10,4 @@ permissions:
 
 jobs:
   publish:
-    uses: ptonini-actions/workflows/.github/workflows/publish-github-action.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/publisher-github-action.yaml@main
