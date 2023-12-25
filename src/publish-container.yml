@@ -42,9 +42,9 @@ jobs:
     uses: ptonini-actions/workflows/.github/workflows/handler-containers.yaml@main
     if: github.event.pull_request.merged
     with:
-      action: build-push
+      action: retag
       source_tag: ${{ format('pr{0}', github.event.number) }}
-      tags: latest ${{ vars.pr_approved_tag }} ${{ format('pr{0}', github.event.number) }}
+      tags: latest ${{ vars.pr_approved_tag }}
 
   promote-image:
     uses: ptonini-actions/workflows/.github/workflows/handler-containers.yaml@main

@@ -77,10 +77,10 @@ on:
         required: false
         default: ${{ vars.manifest_macros }}
         type: string
-      rp_manifest_file:
+      release_please_manifest:
         description: ''
         required: false
-        default: ${{ vars.rp_manifest_file }}
+        default: ${{ vars.release_please_manifest }}
         type: string
       staging_domain:
         description: ''
@@ -146,8 +146,7 @@ jobs:
           digest: ${{ inputs.digest }}
           container_registry: ${{ inputs.container_registry }}
           manifest_file: ${{ inputs.manifest_file }}
-          manifest_macros: ${{ inputs.manifest_macros }}
-          rp_manifest_file: ${{ inputs.rp_manifest_file }}
+          release_please_manifest: ${{ inputs.release_please_manifest }}
           staging_domain: ${{ inputs.staging_domain }}
           github_token: ${{ secrets.GH_READER_TOKEN }}
 

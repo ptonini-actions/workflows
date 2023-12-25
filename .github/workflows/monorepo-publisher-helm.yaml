@@ -7,10 +7,10 @@ on:
         description: ''
         required: true
         type: string
-      rp_manifest_file:
+      release_please_manifest:
         description: ''
         required: false
-        default: ${{ vars.rp_manifest_file }}
+        default: ${{ vars.release_please_manifest }}
         type: string
 
 jobs:
@@ -25,7 +25,7 @@ jobs:
       - run: echo "CHART=$(basename ${{ inputs.path }})" | tee -a $GITHUB_ENV
 
       # Extract version from release-please manifest file #####################
-      - run: echo "VERSION=$(jq -r '."${{ inputs.path }}"' ${{ inputs.rp_manifest_file }})" | tee -a $GITHUB_ENV
+      - run: echo "VERSION=$(jq -r '."${{ inputs.path }}"' ${{ inputs.release_please_manifest }})" | tee -a $GITHUB_ENV
 
       # Generate chart package ################################################
       - run: helm package --dependency-update ${{ inputs.path }}

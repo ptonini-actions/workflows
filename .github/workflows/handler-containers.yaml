@@ -11,7 +11,7 @@ on:
       repository:
         description: ''
         required: false
-        default: ${{ github.event.repository.name }}
+        default: ${{ github.event.repository.full_name }}
         type: string
       registry:
         description: ''
@@ -39,12 +39,12 @@ on:
       path:
         description: ''
         required: false
-        default: '.'
+        default: .
         type: string
-      rp_manifest_file:
+      release_please_manifest:
         description: ''
         required: false
-        default: ${{ vars.rp_manifest_file }}
+        default: ${{ vars.release_please_manifest }}
         type: string
     secrets:
       BUILD_ARGUMENTS:
@@ -75,14 +75,13 @@ jobs:
       - run: | 
           export TAGS
           for T in ${{ inputs.tags }}; do
-            [[ ${T} == "%MANIFEST_FILE%"]] && T=$(jq -r '."${{ inputs.path }}"' < ${{ inputs.rp_manifest_file }})"
-            TAGS=${{ inputs.repository }}:${T},${TAGS}
+            [[ ${T} == "%MANIFEST_FILE%"]] && T=$(jq -r '."${{ inputs.path }}"' < ${{ inputs.release_please_manifest }})"
+            TAGS+="${{ inputs.registry }}/${{ inputs.repository }}:${T},"
           done
           echo "TAGS=${TAGS}" | tee -a $GITHUB_ENV
-        shell: bash
 
       # Build/push container image ############################################
-      - if: inputs.action = 'build-push'
+      - if: inputs.action == 'build-push'
         uses: actions/cache@v3
         with:
           path: /tmp/cache
@@ -102,10 +101,10 @@ jobs:
         shell: bash
 
       # Re-tag container image ################################################
-      - if: inputs.action = 'retag'
+      - if: inputs.action == 'retag'
         run: |
-          for TAG in ${{ env.TAGS }}; do
-            docker buildx imagetools create ${{ inputs.repository }}:${{ inputs.source_tag }} --tag ${TAG}
+          for T in ${TAGS}; do
+            docker buildx imagetools create ${{ inputs.registry }}/${{ inputs.repository }}:${{ inputs.source_tag }} --tag ${T}
           done
         env:
           IFS: ,

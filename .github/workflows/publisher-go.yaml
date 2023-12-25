@@ -8,10 +8,10 @@ on:
         default: ${{ github.event.repository.name }}
         required: false
         type: string
-      rp_manifest_file:
+      release_please_manifest:
         description: ''
         required: false
-        default: ${{ vars.rp_manifest_file }}
+        default: ${{ vars.release_please_manifest }}
         type: string
       go_builder_image:
         description: ''
@@ -33,7 +33,7 @@ jobs:
       - uses: actions/checkout@v3
 
       # Extract version from release-please manifest file #####################
-      - run: echo "VERSION=$(jq -r '."."' < ${{ inputs.rp_manifest_file }})" | tee -a $GITHUB_ENV
+      - run: echo "VERSION=$(jq -r '."."' < ${{ inputs.release_please_manifest }})" | tee -a $GITHUB_ENV
 
       # Compile application and create checksum ###############################
       - run: | 
