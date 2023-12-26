@@ -16,24 +16,24 @@ jobs:
           ref: ${{ github.head_ref }}
 
       # C# ####################################################################
-      - run: (dotnet restore -f --no-cache && dotnet build && dotnet format) || true
-        if: github.event.repository.language == 'C#'
+      - if: github.event.repository.language == 'C#'
+        run: (dotnet restore -f --no-cache && dotnet build && dotnet format) || true
 
       # NodeJS ################################################################
-      - run: (yarn && yarn lint && yarn format) || true
-        if: github.event.repository.language == 'TypeScript'
+      - if: github.event.repository.language == 'TypeScript'
+        run: (yarn && yarn lint && yarn format) || true
 
       # Go ####################################################################
-      - run: go fmt || true
-        if: github.event.repository.language == 'Go'
+      - if: github.event.repository.language == 'Go'
+        run: go fmt || true
 
       # Python ################################################################
-      - run: (pip3 install ruff && ruff .) || true
-        if: github.event.repository.language == 'Python'
+      - if: github.event.repository.language == 'Python'
+        run: (pip3 install ruff && ruff .) || true
 
       # HCL ###################################################################
-      - run: terragrunt hclfmt || true
-        if: github.event.repository.language == 'HCL'
+      - if: github.event.repository.language == 'HCL'
+        run: terragrunt hclfmt || true
 
       - uses: EndBug/add-and-commit@v9
         id: commit

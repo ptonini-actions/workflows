@@ -36,6 +36,9 @@ jobs:
       action: plan
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+      VAULT_CREDENTIALS: ${{ secrets.VAULT_CREDENTIALS }}
+      AWS_CREDENTIALS: ${{ secrets.AWS_CREDENTIALS }}
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
       OPENSTACK_CONFIG: ${{ secrets.OPENSTACK_CONFIG }}
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
       TFVARS: ${{ secrets.TFVARS }}
@@ -47,5 +50,8 @@ jobs:
       action: apply
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+      VAULT_CREDENTIALS: ${{ secrets.VAULT_CREDENTIALS }}
+      AWS_CREDENTIALS: ${{ secrets.AWS_CREDENTIALS }}
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
       OPENSTACK_CONFIG: ${{ secrets.OPENSTACK_CONFIG }}
       GH_TOKEN: ${{ secrets.GH_TOKEN }}

@@ -72,6 +72,9 @@ jobs:
       digest: ${{ needs.publish_image.outputs.digest }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+      VAULT_CREDENTIALS: ${{ secrets.VAULT_CREDENTIALS }}
+      AWS_CREDENTIALS: ${{ secrets.AWS_CREDENTIALS }}
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
       GH_READER_TOKEN: ${{ secrets.GH_READER_TOKEN }}
   performance-testing:
     uses: ptonini-actions/workflows/.github/workflows/tester--performance.yaml@main
@@ -109,7 +112,7 @@ jobs:
     with:
       action: retag
       source_tag: ${{ vars.pr_approved_tag }}
-      tags: %MANIFEST_VERSION%
+      tags: '%MANIFEST_VERSION%'
 
   # Deploy container image to production ######################################
   deploy-to-production:

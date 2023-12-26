@@ -27,25 +27,10 @@ on:
         required: false
         default: ${{ vars.vault_addr }}
         type: string
-      vault_credentials:
-        description: ''
-        required: false
-        default: ${{ vars.vault_credentials }}
-        type: string
-      aws_credentials:
-        description: ''
-        required: false
-        default: ${{ vars.aws_credentials }}
-        type: string
       aws_region:
         description: ''
         required: false
         default: ${{ vars.aws_region }}
-        type: string
-      azure_credentials:
-        description: ''
-        required: false
-        default: ${{ vars.azure_credentials }}
         type: string
       azure_resource_group:
         description: ''
@@ -91,6 +76,17 @@ on:
       OPENVPN_CONFIG:
         description: ''
         required: false
+      AZURE_CREDENTIALS:
+        description: ''
+        required: false
+        type: string
+      VAULT_CREDENTIALS:
+        description: ''
+        required: false
+      AWS_CREDENTIALS:
+        description: ''
+        required: false
+        type: string
       GH_READER_TOKEN:
         description: ''
         required: true
@@ -119,9 +115,9 @@ jobs:
       # Login to cloud providers ##############################################
       - uses: ptonini-actions/cloud-login@v1
         with:
-          vault_credentials: ${{ inputs.vault_credentials }}
-          aws_credentials: ${{ inputs.aws_credentials }}
-          azure_credentials: ${{ inputs.azure_credentials }}
+          vault_credentials: ${{ secrets.VAULT_CREDENTIALS }}
+          aws_credentials: ${{ secrets.AWS_CREDENTIALS }}
+          azure_credentials: ${{ secrets.AZURE_CREDENTIALS }}
 
       # Generate kubeconfig file ##############################################
       - uses: ptonini-actions/get-kubeconfig@v1
