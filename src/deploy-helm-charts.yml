@@ -65,7 +65,7 @@ jobs:
       always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') &&
       vars.skip_staging != 'true'
     needs:
-      - publish_image
+      - publish-image
     with:
       action: deploy helm
       environment: staging
@@ -80,7 +80,7 @@ jobs:
     uses: ptonini-actions/workflows/.github/workflows/tester--performance.yaml@main
     if: vars.performance_testing == 'true'
     needs:
-      - deploy_to_staging
+      - deploy-to-staging
     with:
       host: ${{ needs.deploy_to_staging.outputs.staging_host }}
 
@@ -118,7 +118,7 @@ jobs:
   deploy-to-production:
     uses: ptonini-actions/workflows/.github/workflows/handler--kubernetes.yaml@main
     needs:
-      - promote_image
+      - promote-image
     with:
       action: deploy helm
     secrets:

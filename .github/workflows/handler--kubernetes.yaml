@@ -79,14 +79,12 @@ on:
       AZURE_CREDENTIALS:
         description: ''
         required: false
-        type: string
       VAULT_CREDENTIALS:
         description: ''
         required: false
       AWS_CREDENTIALS:
         description: ''
         required: false
-        type: string
       GH_READER_TOKEN:
         description: ''
         required: true

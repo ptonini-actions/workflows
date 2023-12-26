@@ -81,7 +81,7 @@ jobs:
           echo "TAGS=${TAGS}" | tee -a $GITHUB_ENV
 
       # Build/push container image ############################################
-      - if: inputs.action = 'build-push'
+      - if: inputs.action == 'build-push'
         uses: ptonini-actions/build-push-image@v1
         id: build-push
         with:
@@ -94,8 +94,5 @@ jobs:
         run: | 
           export IFS=,
           for T in ${TAGS}; do docker buildx imagetools create ${{ inputs.registry }}/${{ inputs.repository }}:${{ inputs.source_tag }} --tag ${T};  done
-
     outputs:
-      digest:
-        description: ''
-        value: ${{ steps.build-push.outputs.digest }}
+      digest: ${{ steps.build-push.outputs.digest }}
