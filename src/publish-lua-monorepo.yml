@@ -10,11 +10,11 @@ on:
 
 jobs:
   detect_changes:
-    uses: ptonini-actions/workflows/.github/workflows/paths-filter.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/action--paths-filter.yaml@main
     if: github.event_name == 'pull_request'
 
   release_please:
-    uses: ptonini-actions/workflows/.github/workflows/release-please.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/action--release-please.yaml@main
     if: github.event_name == 'push'
 
   publish:
@@ -28,6 +28,6 @@ jobs:
     with:
       path: ${{ matrix.path }}
   update-repository:
-    uses: ptonini-actions/workflows/.github/workflows/repository-updater-lua.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/repository-updater--lua.yaml@main
     needs:
       - publish_rocks

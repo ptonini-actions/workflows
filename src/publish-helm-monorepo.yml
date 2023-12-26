@@ -10,15 +10,15 @@ on:
 
 jobs:
   detect_changes:
-    uses: ptonini-actions/workflows/.github/workflows/paths-filter.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/action--paths-filter.yaml@main
     if: github.event_name == 'pull_request'
 
   release_please:
-    uses: ptonini-actions/workflows/.github/workflows/release-please.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/action--release-please.yaml@main
     if: github.event_name == 'push'
 
   publish:
-    uses: ptonini-actions/workflows/.github/workflows/monorepo-publisher-helm.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/monorepo-publisher--helm.yaml@main
     if: needs.release_please.outputs.paths_released != '[]'
     needs:
       - release_please
@@ -29,6 +29,6 @@ jobs:
       path: ${{ matrix.path }}
 
   update-repository:
-    uses: ptonini-actions/workflows/.github/workflows/repository-updater-helm.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/repository-updater--helm.yaml@main
     needs:
       - publish_charts

@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   apply-helm-chart:
-    uses: ptonini-actions/workflows/.github/workflows/handler-kubernetes.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/handler--kubernetes.yaml@main
     with:
       action: deploy helm
     secrets:

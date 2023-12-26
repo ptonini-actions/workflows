@@ -10,15 +10,15 @@ on:
 
 jobs:
   detect-changes:
-    uses: ptonini-actions/workflows/.github/workflows/paths-filter.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/action--paths-filter.yaml@main
     if: github.event_name == 'pull_request'
 
   release-please:
-    uses: ptonini-actions/workflows/.github/workflows/release-please.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/action--release-please.yaml@main
     if: github.event_name == 'push'
 
   publish-monorepo-images:
-    uses: ptonini-actions/workflows/.github/workflows/handler-containers.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/handler--containers.yaml@main
     if: needs.release_please.outputs.paths_released != '[]'
     needs:
       - release_please

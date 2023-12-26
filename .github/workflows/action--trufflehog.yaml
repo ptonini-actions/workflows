@@ -18,7 +18,7 @@ jobs:
           [[ ! -e .trufflehog-ignore ]] || echo 'TRUFFLEHOG_EXTRA_ARGS=--exclude-paths=.trufflehog-ignore' | tee -a $GITHUB_ENV
           [[ -z ${RUNNER_DEBUG} ]] || 'TRUFFLEHOG_EXTRA_ARGS+= --debug' | tee -a $GITHUB_ENV
 
-      # Run security scan #####################################################
+      # Trufflehog action #####################################################
       - uses: trufflesecurity/trufflehog@main
         with:
           path: ./

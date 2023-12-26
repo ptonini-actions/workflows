@@ -36,7 +36,7 @@ jobs:
       - run: ${{ inputs.filters_cmd }} > ${{ inputs.filters }}
         if: inputs.filters_cmd
 
-      # Detect updated folders ################################################
+      # Paths-filter action ###################################################
       - uses: dorny/paths-filter@v2
         id: filter
         with:
