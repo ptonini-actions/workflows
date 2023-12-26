@@ -67,15 +67,10 @@ on:
         required: false
         default: ${{ vars.container_registry }}
         type: string
-      manifest_file:
+      manifest:
         description: ''
         required: false
-        default: ${{ vars.manifest_file }}
-        type: string
-      manifest_macros:
-        description: ''
-        required: false
-        default: ${{ vars.manifest_macros }}
+        default: ${{ vars.manifest }}
         type: string
       release_please_manifest:
         description: ''
@@ -145,7 +140,7 @@ jobs:
           environment: ${{ inputs.environment }}
           digest: ${{ inputs.digest }}
           container_registry: ${{ inputs.container_registry }}
-          manifest_file: ${{ inputs.manifest_file }}
+          manifest: ${{ inputs.manifest }}
           release_please_manifest: ${{ inputs.release_please_manifest }}
           staging_domain: ${{ inputs.staging_domain }}
           github_token: ${{ secrets.GH_READER_TOKEN }}

@@ -81,31 +81,21 @@ jobs:
           echo "TAGS=${TAGS}" | tee -a $GITHUB_ENV
 
       # Build/push container image ############################################
-      - if: inputs.action == 'build-push'
-        uses: actions/cache@v3
-        with:
-          path: /tmp/cache
-          key: ${{ inputs.repository }}-buildx
       - if: inputs.action = 'build-push'
-        uses: docker/build-push-action@v3
-        id: build
+        uses: ptonini-actions/build-push-image@v1
+        id: build-push
         with:
-          push: true
           tags: ${{ env.TAGS }}
-          cache-from: type=local,src=/tmp/cache
-          cache-to: type=local,mode=max,dest=/tmp/cache-new
           build-args: ${{ inputs.build_arguments }}
           context: ${{ github.workspace }}/${{ inputs.path }}
-      - if: inputs.action = 'build-push'
-        run: rm -rf /tmp/cache && mv /tmp/cache-new /tmp/cache
-        shell: bash
 
       # Re-tag container image ################################################
       - if: inputs.action == 'retag'
-        run: |
-          for T in ${TAGS}; do
-            docker buildx imagetools create ${{ inputs.registry }}/${{ inputs.repository }}:${{ inputs.source_tag }} --tag ${T}
-          done
+        run: for T in ${TAGS}; do docker buildx imagetools create ${{ inputs.registry }}/${{ inputs.repository }}:${{ inputs.source_tag }} --tag ${T};  done
         env:
           IFS: ,
-        shell: bash
+
+    outputs:
+      digest:
+        description: ''
+        value: ${{ steps.build-push.outputs.digest }}

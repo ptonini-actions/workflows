@@ -96,7 +96,7 @@ jobs:
     if: |
       github.event_name == 'pull_request' && github.event.pull_request.merged && 
       contains(github.event.pull_request.labels.*.name, 'published') && 
-      !startsWith(github.event.pull_request.head.ref, vars.release_pr_branch_prefix)
+      !startsWith(github.event.pull_request.head.ref, vars.release_please_branch_prefix)
     with:
       action: retag
       source_tag: ${{ format('pr{0}', github.event.number) }}
