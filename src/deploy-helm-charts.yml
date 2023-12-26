@@ -112,7 +112,7 @@ jobs:
     with:
       action: retag
       source_tag: ${{ vars.pr_approved_tag }}
-      tags: '%MANIFEST_VERSION%'
+      tags: --MANIFEST-VERSION--
 
   # Deploy container image to production ######################################
   deploy-to-production:

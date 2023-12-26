@@ -27,5 +27,5 @@ jobs:
         path: ${{ fromJSON(needs.release_please.outputs.paths_released) }}
     with:
       repository: ${{ github.repository_owner }}/${{ matrix.path }}
-      tags: latest '%MANIFEST_VERSION%'
+      tags: latest --MANIFEST-VERSION--
       path: ${{ matrix.path }}

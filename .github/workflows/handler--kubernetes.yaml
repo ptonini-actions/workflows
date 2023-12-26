@@ -87,7 +87,7 @@ on:
         required: false
       GH_READER_TOKEN:
         description: ''
-        required: true
+        required: false
     outputs:
       staging_host:
         description: ''
