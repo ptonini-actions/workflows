@@ -97,6 +97,10 @@ jobs:
           tags: ${{ env.TAGS }}
           build-args: ${{ inputs.build_arguments }}
           context: ${{ github.workspace }}/${{ inputs.path }}
+      - if: inputs.action == 'build-push' && github.event_name == 'pull_request'
+        uses: ptonini-actions/set-labels@v1
+        with:
+          labels: published
 
       # Re-tag container image ################################################
       - if: inputs.action == 'retag'
