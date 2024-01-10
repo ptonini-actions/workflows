@@ -147,7 +147,7 @@ jobs:
             source "${RELEASE}/parameters"
             if [[ "${{ inputs.action }}" =~ "deploy" ]]; then
               helm upgrade -i ${RELEASE_NAME} ${CHART} -n ${NAMESPACE} --values "${RELEASE}/values" --version ${CHART_VERSION} --repo ${REPOSITORY} --history-max ${{ inputs.helm_max_history }} ${EXTRA_ARGS} --debug
-            else if [[ "${{ inputs.action }}" =~ "uninstall" ]]; then
+            elif [[ "${{ inputs.action }}" =~ "uninstall" ]]; then
               helm uninstall ${RELEASE_NAME} ${CHART} -n ${NAMESPACE}
             fi
           done

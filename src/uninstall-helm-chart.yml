@@ -17,3 +17,6 @@ jobs:
       action: uninstall
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+      VAULT_CREDENTIALS: ${{ secrets.VAULT_CREDENTIALS }}
+      AWS_CREDENTIALS: ${{ secrets.AWS_CREDENTIALS }}
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
