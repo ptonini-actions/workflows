@@ -27,6 +27,7 @@ jobs:
         path: ${{ fromJSON(needs.release_please.outputs.paths_released) }}
     with:
       path: ${{ matrix.path }}
+
   update-repository:
     uses: ptonini-actions/workflows/.github/workflows/repository-updater--lua.yaml@main
     needs:

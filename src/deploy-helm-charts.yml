@@ -72,10 +72,10 @@ jobs:
       digest: ${{ needs.publish_image.outputs.digest }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+      GH_READER_TOKEN: ${{ secrets.GH_READER_TOKEN }}
       VAULT_CREDENTIALS: ${{ secrets.VAULT_CREDENTIALS }}
       AWS_CREDENTIALS: ${{ secrets.AWS_CREDENTIALS }}
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-      GH_READER_TOKEN: ${{ secrets.GH_READER_TOKEN }}
   performance-testing:
     uses: ptonini-actions/workflows/.github/workflows/tester--performance.yaml@main
     if: vars.performance_testing == 'true'
@@ -123,6 +123,7 @@ jobs:
       action: deploy helm
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+      GH_READER_TOKEN: ${{ secrets.GH_READER_TOKEN }}
       VAULT_CREDENTIALS: ${{ secrets.VAULT_CREDENTIALS }}
       AWS_CREDENTIALS: ${{ secrets.AWS_CREDENTIALS }}
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
