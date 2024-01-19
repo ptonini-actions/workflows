@@ -14,9 +14,10 @@ jobs:
   uninstall-release:
     uses: ptonini-actions/workflows/.github/workflows/handler--kubernetes.yaml@main
     with:
-      action: uninstall
+      action: uninstall helm
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+      GH_READER_TOKEN: ${{ secrets.GH_READER_TOKEN }}
       VAULT_CREDENTIALS: ${{ secrets.VAULT_CREDENTIALS }}
       AWS_CREDENTIALS: ${{ secrets.AWS_CREDENTIALS }}
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
