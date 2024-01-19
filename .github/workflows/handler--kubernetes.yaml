@@ -148,7 +148,7 @@ jobs:
             if [[ "${{ inputs.action }}" =~ "deploy" ]]; then
               helm upgrade -i ${RELEASE_NAME} ${CHART} -n ${NAMESPACE} --values "${RELEASE}/values" --version ${CHART_VERSION} --repo ${REPOSITORY} --history-max ${{ inputs.helm_max_history }} ${EXTRA_ARGS} --debug
             elif [[ "${{ inputs.action }}" =~ "uninstall" ]]; then
-              helm uninstall ${RELEASE_NAME} ${CHART} -n ${NAMESPACE}
+              helm uninstall ${RELEASE_NAME} -n ${NAMESPACE} --debug
             fi
           done
 
@@ -165,9 +165,9 @@ jobs:
           kubectl delete namespace ${NAMESPACE}
 
       - if: github.event_name == 'pull_request' && steps.releases.outputs.message != ''
-        uses: thollander/actions-comment-pull-request@v2
-        with:
-          message: ${{ steps.releases.outputs.message }}
+        run: gh pr comment ${{ github.event.number }} --body '${{ steps.releases.outputs.message }}' --edit-last
+        env:
+          GH_TOKEN: ${{ github.token }}
 
     outputs:
       staging_host: ${{ steps.releases.outputs.staging_host }}
