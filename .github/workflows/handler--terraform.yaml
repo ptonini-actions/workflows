@@ -91,10 +91,9 @@ jobs:
       - if: inputs.action == 'plan'
         run: echo '```${{ steps.show.outputs.stdout }}${{ steps.plan.outputs.stderr }}```' >> $GITHUB_STEP_SUMMARY
       - if: inputs.action == 'plan'
-        uses: thollander/actions-comment-pull-request@v2
-        with:
-          message: '```${{ steps.show.outputs.stdout }}${{ steps.plan.outputs.stderr }}```'
-          comment_tag: plan_output
+        run: gh pr comment ${{ github.event.number }} --edit-last --body '```${{ steps.show.outputs.stdout }}${{ steps.plan.outputs.stderr }}```'
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       # Upload plan to artifact and set labels ################################
       - if: inputs.action == 'plan' && steps.plan.outputs.exitcode == '2'

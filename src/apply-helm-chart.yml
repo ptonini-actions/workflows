@@ -1,10 +1,24 @@
 name: apply
 
 concurrency:
-  group: apply
+  group: ${{ github.event_name }}
 
 on:
   workflow_dispatch: ~
+  push:
+    branches:
+      - master
+      - main
+    paths:
+      - manifest.yaml
+  pull_request:
+    types:
+      - synchronize
+    branches:
+      - master
+      - main
+    paths:
+      - manifest.yaml
 
 permissions:
   id-token: write
@@ -15,6 +29,8 @@ jobs:
     uses: ptonini-actions/workflows/.github/workflows/handler--kubernetes.yaml@main
     with:
       action: deploy helm
+      environment: ${{ github.event_name == 'pull_request' && 'staging' || 'production' }}
+      tag: ${{ github.event_name == 'pull_request' && format('pr{0}', github.event.number) }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
       GH_READER_TOKEN: ${{ secrets.GH_READER_TOKEN }}

@@ -18,7 +18,7 @@ jobs:
     if: github.event_name == 'push'
 
   publish-monorepo-images:
-    uses: ptonini-actions/workflows/.github/workflows/handler--containers.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/handler--container.yaml@main
     if: needs.release_please.outputs.paths_released != '[]'
     needs:
       - release_please

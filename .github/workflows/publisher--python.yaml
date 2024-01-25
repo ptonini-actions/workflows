@@ -42,7 +42,3 @@ jobs:
           user: ${{ inputs.username }}
           password: ${{ inputs.password }}
           repository-url: ${{ inputs.repository_url }}
-
-
-
-

@@ -38,12 +38,9 @@ jobs:
           luarocks pack ${ROCK}-${VERSION}-1.rockspec
 
       # Upload rock to release ################################################
-      - uses: ptonini-actions/upload-release@v1
-        with:
-          file: ${{ env.ROCK }}-${{ env.VERSION }}-*
-          file_glob: true
-          tag: ${{ env.ROCK }}-v${{ env.VERSION }}
-          overwrite: true
+      - run: gh release upload --clobber ${{ env.ROCK }}-v${{ env.VERSION }} ${{ env.ROCK }}-${{ env.VERSION }}-*
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       # Upload rock to artifact ###############################################
       - uses: actions/upload-artifact@v3

@@ -31,11 +31,9 @@ jobs:
       - run: helm package --dependency-update ${{ inputs.path }}
 
       # Upload package to release #############################################
-      - uses: ptonini-actions/upload-release@v1
-        with:
-          file: ${{ env.CHART }}-${{ env.VERSION }}.tgz
-          tag: ${{ env.CHART }}-v${{ env.VERSION }}
-          overwrite: true
+      - run: gh release upload --clobber ${{ env.CHART }}-v${{ env.VERSION }} ${{ env.CHART }}-${{ env.VERSION }}.tgz
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       # Upload package to artifact ############################################
       - uses: actions/upload-artifact@v3

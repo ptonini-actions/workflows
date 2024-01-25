@@ -17,6 +17,10 @@ on:
         description: ''
         required: false
         type: string
+      tag:
+        description: ''
+        required: false
+        type: string
       ovpn_validation_addr:
         description: ''
         required: false
@@ -132,6 +136,7 @@ jobs:
         id: releases
         with:
           environment: ${{ inputs.environment }}
+          tag: ${{ inputs.digest }}
           digest: ${{ inputs.digest }}
           container_registry: ${{ inputs.container_registry }}
           manifest: ${{ inputs.manifest }}
@@ -141,7 +146,7 @@ jobs:
 
       # Handle helm releases ##################################################
       - if: contains(inputs.action, 'helm')
-        name: ${{ inputs.action }} chart ${{ github.event.repository.name }}
+        name: ${{ inputs.action }} release ${{ github.event.repository.name }}
         run: |
           for RELEASE in ${{ steps.releases.outputs.releases }}; do
             source "${RELEASE}/parameters"
@@ -152,22 +157,22 @@ jobs:
             fi
           done
 
+      # Add comment to pull request ###########################################
+      - if: github.event_name == 'pull_request' && steps.releases.outputs.message != ''
+        run: gh pr comment ${{ github.event.number }} --body '${{ steps.releases.outputs.message }}' --edit-last
+        env:
+          GH_TOKEN: ${{ github.token }}
+
       # Delete namespace ######################################################
       - if: inputs.action == 'delete namespace'
         uses: ptonini-actions/get-labels@v1
         with:
           labels: namespace
       - if: inputs.action == 'delete namespace'
-        name: delete staging namespace ${{ env.NAMESPACE }}
+        name: delete namespace ${{ env.NAMESPACE }}
         run: |
           helm list --short --namespace ${NAMESPACE} | xargs -r helm uninstall --namespace ${NAMESPACE}
           kubectl delete all --all --namespace ${NAMESPACE}
           kubectl delete namespace ${NAMESPACE}
-
-      - if: github.event_name == 'pull_request' && steps.releases.outputs.message != ''
-        run: gh pr comment ${{ github.event.number }} --body '${{ steps.releases.outputs.message }}' --edit-last
-        env:
-          GH_TOKEN: ${{ github.token }}
-
     outputs:
       staging_host: ${{ steps.releases.outputs.staging_host }}

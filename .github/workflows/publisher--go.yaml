@@ -42,7 +42,6 @@ jobs:
           sha256sum dist/${{ inputs.app_name }} > dist/SHA256SUMS
 
       # Upload artifact to release ############################################
-      - uses: ptonini-actions/upload-release@v1
-        with:
-          file: dist/${{ inputs.app_name }}
-          tag: v${{ env.VERSION }}
+      - run: gh release upload --clobber v${{ env.VERSION }} dist/${{ inputs.app_name }}
+        env:
+          GH_TOKEN: ${{ github.token }}
