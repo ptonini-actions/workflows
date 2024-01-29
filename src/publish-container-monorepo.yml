@@ -1,4 +1,4 @@
-name: publish
+name: publish container image monorepo
 
 on:
   push:
@@ -17,7 +17,7 @@ jobs:
     uses: ptonini-actions/workflows/.github/workflows/action--release-please.yaml@main
     if: github.event_name == 'push'
 
-  publish-monorepo-images:
+  publish:
     uses: ptonini-actions/workflows/.github/workflows/handler--container.yaml@main
     if: needs.release_please.outputs.paths_released != '[]'
     needs:

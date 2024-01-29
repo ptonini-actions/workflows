@@ -1,4 +1,4 @@
-name: publish
+name: publish terraform module
 concurrency:  ci-${{ github.ref }}
 
 on:

@@ -1,4 +1,4 @@
-name: paths-filter
+name: paths filter
 
 on:
   workflow_call:

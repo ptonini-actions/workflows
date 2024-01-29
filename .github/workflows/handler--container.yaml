@@ -1,4 +1,4 @@
-name: container-handler
+name: container handler
 
 on:
   workflow_call:
@@ -16,7 +16,7 @@ on:
       registry:
         description: ''
         required: false
-        default: ghcr.io
+        default: ${{ vars.container_registry }}
         type: string
       tags:
         description: ''
@@ -49,11 +49,15 @@ on:
     outputs:
       digest:
         description: ''
-        value: ${{ jobs.container-handler.outputs.digest }}
+        value: ${{ jobs.handler.outputs.digest }}
+
+env:
+  TAGS: ''
 
 jobs:
-  container-handler:
+  handler:
     runs-on: ubuntu-latest
+
     steps:
       - run: env | sort
       - run: cat ${GITHUB_EVENT_PATH}
@@ -63,21 +67,14 @@ jobs:
       # Login to container registry ###########################################
       - uses: docker/login-action@v2
         with:
-          registry: ${{ inputs.registry }}
-          username: ${{ env.REGISTRY_USERNAME }}
-          password: ${{ env.REGISTRY_PASSWORD }}
-        env:
-          REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME == '' && github.actor || secrets.REGISTRY_USERNAME }}
-          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD == '' && github.token || secrets.REGISTRY_PASSWORD }}
+          registry: ${{ inputs.registry == '' && 'ghcr.io' || inputs.registry }}
+          username: ${{ secrets.REGISTRY_USERNAME == '' && github.actor || secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD == '' && github.token || secrets.REGISTRY_PASSWORD }}
 
-      # Create TAGS environment variable ######################################
-      - name: create container names TAGS environment variable
+      # Build TAGS environment variable ######################################
+      - name: build TAGS environment variable
         run: | 
-          export TAGS
-          for T in ${{ inputs.tags }}; do
-            [[ ${T} == "--MANIFEST-VERSION--" ]] && T=$(jq -r '."${{ inputs.path }}"' < ${{ inputs.release_please_manifest }})
-            TAGS+="${{ inputs.registry }}/${{ inputs.repository }}:${T},"
-          done
+          for T in ${{ inputs.tags }}; do TAGS+="${{ inputs.registry }}/${{ inputs.repository }}: ${T/--MANIFEST-VERSION--/$(jq -r '."${{ inputs.path }}"' < ${{ inputs.release_please_manifest }})},"; done
           echo "TAGS=${TAGS}" >> ${GITHUB_ENV}
 
       # Build/push container image ############################################

@@ -1,0 +1,34 @@
+name: helm chart publisher
+
+on:
+  workflow_call:
+    inputs:
+      context:
+        description: ''
+        required: false
+        default: '.'
+        type: string
+
+jobs:
+  publisher:
+    runs-on: ubuntu-latest
+    steps:
+      - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
+      - uses: actions/checkout@v3
+
+      # Generate chart package ################################################
+      - run: helm package --dependency-update ${{ inputs.context }}
+
+      # Upload package to release #############################################
+      - run: |
+          export CHART=$(helm show chart ${{ inputs.context }} | sed -rn 's/^name: (.*)$/\1/p')
+          export VERSION=$(helm show chart ${{ inputs.context }} | sed -rn 's/^version: (.*)$/\1/p')
+          gh release upload --clobber ${CHART}-v${VERSION} *.tgz
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      # Upload package to artifact ############################################
+      - uses: actions/upload-artifact@v3
+        with:
+          path: '*.tgz'

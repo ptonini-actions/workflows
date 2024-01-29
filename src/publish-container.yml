@@ -1,4 +1,4 @@
-name: publish
+name: publish container image
 
 on:
   push:
@@ -31,21 +31,21 @@ jobs:
     uses: ptonini-actions/workflows/.github/workflows/action--release-please.yaml@main
     if: github.event_name == 'push'
   
-  publish-image:
+  publish:
     uses: ptonini-actions/workflows/.github/workflows/handler--container.yaml@main
     if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action)
     with:
-      tags: ${{ format('latest pr{0} pr{0}-{1}', github.event.number, github.run_number) }}
+      tags: ${{ format('pr{0} pr{0}-{1}', github.event.number, github.run_number) }}
   
-  approve-image:
+  approve:
     uses: ptonini-actions/workflows/.github/workflows/handler--container.yaml@main
     if: github.event.pull_request.merged
     with:
       action: retag
       source_tag: ${{ format('pr{0}', github.event.number) }}
-      tags: latest ${{ vars.pr_approved_tag }}
+      tags: ${{ format('latest {0} pr{1}', vars.pr_approved_tag, github.event.number) }}
 
-  promote-image:
+  promote:
     uses: ptonini-actions/workflows/.github/workflows/handler--container.yaml@main
     if: github.event_name == 'push' && contains(github.event.commits.*.author.name, 'github-actions[bot]')
     with:

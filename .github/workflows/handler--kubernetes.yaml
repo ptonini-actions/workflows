@@ -1,4 +1,4 @@
-name: kubernetes_handler
+name: kubernetes handler
 
 on:
   workflow_call:
@@ -95,10 +95,10 @@ on:
     outputs:
       staging_host:
         description: ''
-        value: ${{ jobs.kubernetes-handler.outputs.staging_host }}
+        value: ${{ jobs.handler.outputs.staging_host }}
 
 jobs:
-  kubernetes-handler:
+  handler:
     environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest
     env:

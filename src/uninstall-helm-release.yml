@@ -1,7 +1,4 @@
-name: uninstall
-
-concurrency:
-  group: uninstall
+name: uninstall helm release
 
 on:
   workflow_dispatch: ~
@@ -11,7 +8,7 @@ permissions:
   contents: read
 
 jobs:
-  uninstall-release:
+  uninstall:
     uses: ptonini-actions/workflows/.github/workflows/handler--kubernetes.yaml@main
     with:
       action: uninstall helm

@@ -1,4 +1,4 @@
-name: publish
+name: publish helm charts monorepo
 
 on:
   push:
@@ -18,7 +18,7 @@ jobs:
     if: github.event_name == 'push'
 
   publish:
-    uses: ptonini-actions/workflows/.github/workflows/monorepo-publisher--helm.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/publisher--helm-chart.yaml@main
     if: needs.release_please.outputs.paths_released != '[]'
     needs:
       - release_please
@@ -29,6 +29,6 @@ jobs:
       path: ${{ matrix.path }}
 
   update-repository:
-    uses: ptonini-actions/workflows/.github/workflows/repository-updater--helm.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/repository-updater--helm-charts.yaml@main
     needs:
       - publish_charts

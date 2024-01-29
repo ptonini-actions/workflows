@@ -1,4 +1,4 @@
-name: apply
+name: apply helm release
 
 concurrency:
   group: ${{ github.event_name }}
@@ -25,7 +25,7 @@ permissions:
   contents: read
 
 jobs:
-  apply-helm-chart:
+  apply:
     uses: ptonini-actions/workflows/.github/workflows/handler--kubernetes.yaml@main
     with:
       action: deploy helm

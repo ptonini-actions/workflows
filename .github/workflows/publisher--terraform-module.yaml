@@ -1,4 +1,4 @@
-name: terraform-module-publisher
+name: terraform module publisher
 
 on:
   workflow_call:
@@ -20,7 +20,7 @@ on:
 
 
 jobs:
-  terraform-module-publisher:
+  publisher:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort

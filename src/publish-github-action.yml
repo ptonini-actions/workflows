@@ -1,4 +1,4 @@
-name: publish
+name: publish github action
 
 on:
   push:

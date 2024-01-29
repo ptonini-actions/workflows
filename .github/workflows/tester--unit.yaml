@@ -1,4 +1,4 @@
-name: unit-tester
+name: unit tester
 
 on:
   workflow_call:
@@ -37,7 +37,7 @@ env:
   JAVASCRIPT_LCOV_INFO: lcov.info
 
 jobs:
-  unit-tester:
+  tester:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort

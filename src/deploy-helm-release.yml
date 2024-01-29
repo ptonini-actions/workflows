@@ -1,4 +1,4 @@
-name: deploy
+name: deploy helm release
 
 concurrency:
   group: ${{ github.event_name }}
@@ -54,7 +54,7 @@ jobs:
     if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action)
     with:
       action: build-push
-      tags: ${{ format('latest pr{0} pr{0}-{1}', github.event.number, github.run_number) }}
+      tags: ${{ format('pr{0} pr{0}-{1}', github.event.number, github.run_number) }}
     secrets:
       BUILD_ARGUMENTS: |
         BUILD_USERNAME=${{ vars.gh_packages_user }}
@@ -100,7 +100,7 @@ jobs:
     with:
       action: retag
       source_tag: ${{ format('pr{0}', github.event.number) }}
-      tags: latest ${{ vars.pr_approved_tag }} ${{ format('pr{0}', github.event.number) }}
+      tags: ${{ format('latest {0} pr{1}', vars.pr_approved_tag, github.event.number) }}
 
   # Set version tag to pr container image #####################################
   promote-image:

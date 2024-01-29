@@ -1,4 +1,4 @@
-name: publish
+name: publish luarocks monorepo
 
 on:
   push:
@@ -29,6 +29,6 @@ jobs:
       path: ${{ matrix.path }}
 
   update-repository:
-    uses: ptonini-actions/workflows/.github/workflows/repository-updater--lua.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/repository-updater--luarocks.yaml@main
     needs:
       - publish_rocks
