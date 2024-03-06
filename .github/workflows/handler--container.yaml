@@ -26,7 +26,7 @@ on:
         description: ''
         required: false
         type: string
-      path:
+      context:
         description: ''
         required: false
         default: .
@@ -35,6 +35,21 @@ on:
         description: ''
         required: false
         default: ${{ vars.release_please_manifest }}
+        type: string
+      cache_key_suffix:
+        description: ''
+        required: false
+        default: buildx
+        type: string
+      cache_src:
+        description: ''
+        required: false
+        default: /tmp/cache
+        type: string
+      cache_dest:
+        description: ''
+        required: false
+        default: /tmp/cache_new
         type: string
     secrets:
       REGISTRY_USERNAME:
@@ -74,17 +89,28 @@ jobs:
       # Build TAGS environment variable ######################################
       - name: build TAGS environment variable
         run: | 
-          for T in ${{ inputs.tags }}; do TAGS+="${{ inputs.registry }}/${{ inputs.repository }}: ${T/--MANIFEST-VERSION--/$(jq -r '."${{ inputs.path }}"' < ${{ inputs.release_please_manifest }})},"; done
+          for T in ${{ inputs.tags }}; do TAGS+="${{ inputs.registry }}/${{ inputs.repository }}:${T/--MANIFEST-VERSION--/$(jq -r '."${{ inputs.context }}"' < ${{ inputs.release_please_manifest }})},"; done
           echo "TAGS=${TAGS}" >> ${GITHUB_ENV}
 
       # Build/push container image ############################################
       - if: inputs.action == 'build-push'
-        uses: ptonini-actions/build-push-image@v1
+        uses: actions/cache@v3
+        with:
+          path: ${{ inputs.cache_src }}
+          key: ${{ inputs.repository }}-${{ inputs.cache_key_suffix }}
+      - if: inputs.action == 'build-push'
+        uses: docker/build-push-action@v3
         id: build-push
         with:
+          push: true
           tags: ${{ env.TAGS }}
-          build-args: ${{ inputs.build_arguments }}
-          context: ${{ github.workspace }}/${{ inputs.path }}
+          cache-from: type=local,src=${{ inputs.cache_src }}
+          cache-to: type=local,mode=max,dest=${{ inputs.cache_dest }}
+          build-args: ${{ secrets.BUILD_ARGUMENTS }}
+          context: ${{ inputs.context }}
+      - if: inputs.action == 'build-push'
+        name: update cache
+        run: rm -rf ${{ inputs.cache_src }} || true && mv ${{ inputs.cache_dest }} ${{ inputs.cache_src }}
       - if: inputs.action == 'build-push' && github.event_name == 'pull_request'
         uses: ptonini-actions/set-labels@v1
         with:

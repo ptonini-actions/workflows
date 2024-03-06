@@ -27,19 +27,19 @@ jobs:
       - uses: actions/checkout@v3
 
       # Extract rock name from path ###########################################
-      - run: echo "ROCK=$(basename ${{ inputs.context }})" >> $GITHUB_ENV
+      - run: echo "PACKAGE=$(cat rockspec | sed -rn 's/^package = "(.*)"$/\1/p')" >> $GITHUB_ENV
 
       # Extract version from release-please manifest file #####################
       - run: echo "VERSION=$(jq -r '."${{ inputs.context }}"' ${{ inputs.release_please_manifest }})" >> $GITHUB_ENV
 
       # Build rock ############################################################
       - run: | 
-          tar -czvC rocks -f ${{ inputs.context }}.tar.gz ${ROCK}
-          envsubst < ${{ inputs.context }}/rockspec > ${ROCK}-${VERSION}-1.rockspec
-          luarocks pack ${ROCK}-${VERSION}-1.rockspec
+          tar -czvC rocks -f ${{ inputs.context }}.tar.gz ${PACKAGE}
+          envsubst < ${{ inputs.context }}/rockspec > ${PACKAGE}-${VERSION}-1.rockspec
+          luarocks pack ${PACKAGE}-${VERSION}-1.rockspec
 
       # Upload rock to release ################################################
-      - run: gh release upload --clobber ${{ env.ROCK }}-v${{ env.VERSION }} ${{ env.ROCK }}-${{ env.VERSION }}-*
+      - run: gh release upload --clobber ${PACKAGE}-v${VERSION} ${PACKAGE}-${VERSION}-*
         env:
           GH_TOKEN: ${{ github.token }}
 

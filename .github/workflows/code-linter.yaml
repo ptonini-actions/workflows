@@ -9,7 +9,6 @@ jobs:
     steps:
       - run: env | sort
       - run: cat ${GITHUB_EVENT_PATH}
-      - run: sudo wget -qO /usr/local/bin/terragrunt https://github.com/gruntwork-io/terragrunt/releases/latest/download/terragrunt_linux_386 && sudo chmod +x /usr/local/bin/terragrunt
       - uses: ptonini-actions/config-git-user@v1
       - uses: actions/checkout@v3
         with:
@@ -33,8 +32,9 @@ jobs:
 
       # HCL ###################################################################
       - if: github.event.repository.language == 'HCL'
-        run: | 
-          terragrunt hclfmt || true
+        run: |
+          wget -qO terragrunt https://github.com/gruntwork-io/terragrunt/releases/latest/download/terragrunt_linux_386 && sudo chmod +x terragrunt
+          ./terragrunt hclfmt || true
           terraform fmt -recursive || true
 
       - uses: EndBug/add-and-commit@v9

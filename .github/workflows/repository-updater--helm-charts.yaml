@@ -2,7 +2,36 @@ name: helm charts repository updater
 
 on:
   workflow_call:
-
+    inputs:
+      repository_type:
+        description: ''
+        required: false
+        default: gh-pages
+        type: string
+      gh_pages_owner:
+        description: ''
+        required: false
+        default: ${{ github.repository_owner }}
+        type: string
+      gh_pages_repository:
+        description: ''
+        required: false
+        default: ${{ github.event.repository.name }}
+        type: string
+      chartmuseum_url:
+        description: ''
+        required: false
+        type: string
+    secrets:
+      REPOSITORY_USERNAME:
+        description: ''
+        required: false
+      REPOSITORY_PASSWORD:
+        description: ''
+        required: false
+      GH_TOKEN:
+        description: ''
+        required: false
 jobs:
   updater:
     runs-on: ubuntu-latest
@@ -23,4 +52,5 @@ jobs:
           path: ${{ github.workspace }}/builds
 
       # Update repository index ###############################################
-      - run: cr index -p builds -i index.yaml -o ${{ github.repository_owner }} -t ${{ github.token }} -r ${{ github.event.repository.name }} --push --release-name-template "{{ .Name }}-v{{ .Version }}"
+      - if: inputs.repository_type == 'github-pages'
+        run: cr index -p builds -i index.yaml -o ${{ inputs.gh_pages_owner }} -t ${{ env.GH_TOKEN && env.GH_TOKEN || github.token }} -r ${{ inputs.gh_pages_repository }} --push --release-name-template "{{ .Name }}-v{{ .Version }}"

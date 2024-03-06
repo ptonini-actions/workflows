@@ -19,8 +19,6 @@ jobs:
 
       # Download artifact #####################################################
       - uses: actions/download-artifact@v3
-        with:
-          name: rocks
 
       # Update repository index ###############################################
       - run: luarocks-admin make-manifest --local-tree ${{ github.workspace }}

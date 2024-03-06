@@ -41,6 +41,4 @@ jobs:
         id: filter
         with:
           filters: ${{ inputs.filters }}
-
-    outputs:
-      changes: ${{ steps.filter.outputs.changes }}
+    outputs: ${{ steps.filter.outputs }}
