@@ -138,7 +138,7 @@ jobs:
           environment: ${{ inputs.environment }}
           tag: ${{ inputs.digest }}
           digest: ${{ inputs.digest }}
-          container_registry: ${{ inputs.container_registry }}
+          container_registry: ${{ inputs.container_registry }}/${{ github.repository_owner }}
           manifest: ${{ inputs.manifest }}
           release_please_manifest: ${{ inputs.release_please_manifest }}
           staging_domain: ${{ inputs.staging_domain }}
