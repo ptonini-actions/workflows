@@ -105,7 +105,7 @@ jobs:
   # Set version tag to pr container image #####################################
   promote-image:
     uses: ptonini-actions/workflows/.github/workflows/handler--container.yaml@main
-    if: github.event_name == 'push' && github.event.head_commit.author.name == 'github-actions[bot]'
+    if: "github.event_name == 'push' && contains(github.event.commits[0].author.name, 'github-actions[bot]') && contains(github.event.commits[0].message, 'chore(main): release')"
     with:
       action: retag
       source_tag: ${{ vars.pr_approved_tag }}
