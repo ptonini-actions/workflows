@@ -10,7 +10,7 @@ jobs:
       - run: env | sort
       - run: cat ${GITHUB_EVENT_PATH}
       - uses: ptonini-actions/config-git-user@v1
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
 

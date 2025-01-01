@@ -43,7 +43,7 @@ jobs:
       - run: env | sort
       - run: cat ${GITHUB_EVENT_PATH}
       - run: mkdir -p ${{ env.REPORTS_FOLDER }} && touch ${{ env.REPORTS_FOLDER }}/.placeholder
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -88,7 +88,7 @@ jobs:
             -Dsonar.test.inclusions=**/*_test.go
         continue-on-error: true
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ env.REPORTS_FOLDER }}
           path: ${{ env.REPORTS_FOLDER }}

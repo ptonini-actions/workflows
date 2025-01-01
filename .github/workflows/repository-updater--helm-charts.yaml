@@ -39,15 +39,15 @@ jobs:
       - run: env | sort
       - run: cat ${GITHUB_EVENT_PATH}
       - uses: ptonini-actions/config-git-user@v1
-      - uses: helm/chart-releaser-action@v1.4.1
+      - uses: helm/chart-releaser-action@v1
         with:
           install_only: true
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       # Download artifact #####################################################
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           path: ${{ github.workspace }}/builds
 

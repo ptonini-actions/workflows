@@ -1,0 +1,137 @@
+name: nodejs application handler
+
+on:
+  workflow_call:
+    inputs:
+      action:
+        description: ''
+        required: true
+        type: string
+      artifact_name:
+        description: ''
+        required: true
+        type: string
+      build_command:
+        description: ''
+        required: false
+        type: string
+      build_directory:
+        description: ''
+        required: false
+        default: build
+        type: string
+      aws_bucket:
+        description: ''
+        required: false
+        type: string
+      aws_bucket_key:
+        description: ''
+        required: false
+        default: www
+        type: string
+      custom_types:
+        description: ''
+        required: false
+        default: "[]"
+        type: string
+      aws_cloudfront_distribution:
+        description: ''
+        required: false
+        type: string
+      aws_target_bucket:
+        description: ''
+        required: false
+        type: string
+      aws_target_bucket_key:
+        description: ''
+        required: false
+        default: www
+        type: string
+      ovpn_validation_addr:
+        description: ''
+        required: false
+        default: ${{ vars.ovpn_validation_addr }}
+        type: string
+      nodejs_version:
+        description: ''
+        required: false
+        default: ${{ vars.nodejs_version }}
+        type: string
+    secrets:
+      NPM_TOKEN:
+        description: ''
+        required: false
+      OPENVPN_CONFIG:
+        description: ''
+        required: false
+      AZURE_CREDENTIALS:
+        description: ''
+        required: false
+      VAULT_CREDENTIALS:
+        description: ''
+        required: false
+      AWS_CREDENTIALS:
+        description: ''
+        required: false
+jobs:
+  handler:
+    runs-on: ubuntu-latest
+    steps:
+      - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.nodejs_version }}
+
+      # Connect to VPN ########################################################
+      - if: secrets.OPENVPN_CONFIG
+        uses: ptonini-actions/openvpn@v1
+        with:
+          openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
+          validation_addr: ${{ inputs.ovpn_validation_addr }}
+
+      # Login to cloud providers ##############################################
+      - uses: ptonini-actions/cloud-login@v1
+        with:
+          vault_credentials: ${{ secrets.VAULT_CREDENTIALS }}
+          aws_credentials: ${{ secrets.AWS_CREDENTIALS }}
+          azure_credentials: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Build artifact ########################################################
+      - if: inputs.action == 'build'
+        name: build artifact
+        run: ${{ inputs.build_command }} && tar czvf ${{ inputs.artifact_name }} ${{ inputs.build_directory }}
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - if: inputs.action == 'build'
+        uses: actions/upload-artifact@v4
+        with:
+          path: ${{ inputs.artifact_name }}
+      - if: inputs.action == 'build' && inputs.aws_bucket
+        name: upload to aws bucket
+        run: aws s3 cp ${{ inputs.artifact_name }} "s3://${{ inputs.aws_bucket }}/${{ inputs.artifact_name }}"
+
+      # Deploy application ####################################################
+      - if: inputs.action == 'deploy' && inputs.aws_bucket
+        name: deploy to aws bucket
+        run: |
+          aws s3 cp "s3://${{ inputs.aws_bucket }}/${{ inputs.artifact_name }}" ${{ inputs.artifact_name }}
+          tar xzvf ${{ inputs.artifact_name }}
+          aws s3 sync --delete --acl public-read build "s3://${{ inputs.aws_bucket }}/${{ inputs.aws_bucket_key }}"
+          for I in $(jq -c '.[]' <<< "${{ inputs.custom_types }}"); do
+            OBJECT=$(jq -r '.object' <<< "${I}")
+            aws s3api put-object --bucket ${{ inputs.aws_bucket }} --key ${{ inputs.aws_bucket_key }}/${OBJECT} --body ${{ inputs.build_directory }}/${OBJECT} --content-type $(jq -r '."content-type"' <<< "${I}") --acl public-read
+          done
+      - if: inputs.action == 'deploy' && inputs.aws_bucket && inputs.aws_cloudfront
+        name: invalidate cloudfront cache
+        run: aws cloudfront create-invalidation --distribution-id ${{ inputs.aws_cloudfront }} --paths "/*"
+
+      # Destroy deployment ####################################################
+      - if: inputs.action == 'destroy' && inputs.aws_bucket
+        name: destroy aws deployment
+        run: aws s3 rm --recursive "s3://${{ inputs.aws_bucket }}/${{ inputs.aws_bucket_key }}"
+
+      # Approve application ###################################################
+      - if: inputs.action == 'approve' && inputs.aws_bucket
+        name: approve application
+        run: aws s3 cp "s3://${{ inputs.aws_bucket }}/${{ inputs.aws_bucket_key }}" "s3://${{ inputs.aws_target_bucket }}/${{ inputs.aws_target_bucket_key }}"

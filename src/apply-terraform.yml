@@ -23,7 +23,7 @@ permissions:
 jobs:
 
   lint:
-    uses: ptonini-actions/workflows/.github/workflows/code-linter.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/linter.yaml@main
     if: contains('opened synchronize', github.event.action) && vars.skip_linting != 'true'
   security-scan:
     uses: ptonini-actions/workflows/.github/workflows/action--trufflehog.yaml@main

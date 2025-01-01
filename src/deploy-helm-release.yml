@@ -39,7 +39,7 @@ jobs:
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   lint:
-    uses: ptonini-actions/workflows/.github/workflows/code-linter.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/linter.yaml@main
     if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action) && !vars.skip_linting
   security-scan:
     uses: ptonini-actions/workflows/.github/workflows/action--trufflehog.yaml@main

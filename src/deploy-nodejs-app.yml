@@ -1,0 +1,118 @@
+name: deploy nodejs application
+
+concurrency:
+  group: ${{ github.event_name }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches:
+      - master
+      - main
+    paths-ignore:
+      - manifest.yaml
+      - .github/workflows/*
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - closed
+    branches:
+      - master
+      - main
+    paths-ignore:
+      - manifest.yaml
+      - .github/workflows/*
+
+permissions:
+  id-token: write
+  packages: write
+  pull-requests: write
+  contents: write
+
+jobs:
+
+  # Code verification #########################################################
+  test:
+    uses: ptonini-actions/workflows/.github/workflows/tester--unit.yaml@main
+    if: contains('push pull-request', github.event_name) && github.event.action != 'closed' && github.event.head_commit.author.name != 'github-actions[bot]' && !vars.skip_testing
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  lint:
+    uses: ptonini-actions/workflows/.github/workflows/linter.yaml@main
+    if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action) && !vars.skip_linting
+  security-scan:
+    uses: ptonini-actions/workflows/.github/workflows/action--trufflehog.yaml@main
+    if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action)
+  release-please:
+    uses: ptonini-actions/workflows/.github/workflows/action--release-please.yaml@main
+    if: github.event_name == 'push'
+
+  # Build application #########################################################
+  build-application:
+    uses: ptonini-actions/workflows/.github/workflows/handler--node-app.yaml@main
+    if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action)
+    with:
+      action: build
+      artifact_name: ${{ format('{0}.pr{1}.tgz', github.event.repository.name, github.event.number) }}
+      aws_bucket: ${{ vars.staging_bucket }}
+    secrets:
+      VAULT_CREDENTIALS: ${{ secrets.VAULT_CREDENTIALS }}
+      AWS_CREDENTIALS: ${{ secrets.AWS_CREDENTIALS }}
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+
+  # Deploy to staging environment #############################################
+  deploy-to-staging:
+    uses: ptonini-actions/workflows/.github/workflows/handler--node-app.yaml@main
+    if: ${{ !vars.skip_staging }}
+    with:
+      action: deploy
+      artifact_name: ${{ format('{0}.pr{1}.tgz', github.event.repository.name, github.event.number) }}
+      aws_bucket: ${{ vars.staging_bucket }}
+      aws_bucket_key: ${{ format('{0}/{1}', github.event.repository.name, github.event.number) }}
+    secrets:
+      VAULT_CREDENTIALS: ${{ secrets.VAULT_CREDENTIALS }}
+      AWS_CREDENTIALS: ${{ secrets.AWS_CREDENTIALS }}
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+
+  # Destroy staging environment ###############################################
+  destroy-staging:
+    uses: ptonini-actions/workflows/.github/workflows/handler--node-app.yaml@main
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && !vars.skip_staging
+    with:
+      action: destroy
+      aws_bucket: ${{ vars.staging_bucket }}
+      aws_bucket_key: ${{ format('{0}/{1}', github.event.repository.name, github.event.number) }}
+    secrets:
+      VAULT_CREDENTIALS: ${{ secrets.VAULT_CREDENTIALS }}
+      AWS_CREDENTIALS: ${{ secrets.AWS_CREDENTIALS }}
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+
+  # Approve application build #################################################
+  approve-application:
+    uses: ptonini-actions/workflows/.github/workflows/handler--node-app.yaml@main
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged && contains(github.event.pull_request.labels.*.name, 'published')
+    with:
+      action: approve
+      artifact_name: ${{ format('{0}.pr{1}.tgz', github.event.repository.name, github.event.number) }}
+      aws_bucket: ${{ vars.staging_bucket }}
+      aws_target_bucket: ${{ vars.aws_cloudfront_bucket }}
+      aws_target_bucket_key: ${{ format('{0}.tgz', github.event.repository.name) }}
+    secrets:
+      VAULT_CREDENTIALS: ${{ secrets.VAULT_CREDENTIALS }}
+      AWS_CREDENTIALS: ${{ secrets.AWS_CREDENTIALS }}
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+
+  # Deploy to production ######################################################
+  deploy-to-production:
+    uses: ptonini-actions/workflows/.github/workflows/handler--node-app.yaml@main
+    if: "github.event_name == 'push' && contains(github.event.commits[0].author.name, 'github-actions[bot]') && contains(github.event.commits[0].message, 'chore(main): release')"
+    with:
+      action: deploy
+      artifact_name: ${{ format('{0}.tgz', github.event.repository.name) }}
+      aws_bucket: ${{ vars.aws_cloudfront_bucket }}
+      aws_cloudfront_distribution: ${ vars.aws_cloudfront_distribution }}
+    secrets:
+      VAULT_CREDENTIALS: ${{ secrets.VAULT_CREDENTIALS }}
+      AWS_CREDENTIALS: ${{ secrets.AWS_CREDENTIALS }}
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}

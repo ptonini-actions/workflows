@@ -20,11 +20,11 @@ jobs:
     steps:
       - run: env | sort
       - run: cat ${GITHUB_EVENT_PATH}
-      - uses: leafo/gh-actions-lua@10
+      - uses: leafo/gh-actions-lua@v10
         with:
           luaVersion: ${{ vars.lua_version }}
       - uses: leafo/gh-actions-luarocks@v4
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       # Extract rock name from path ###########################################
       - run: echo "PACKAGE=$(cat rockspec | sed -rn 's/^package = "(.*)"$/\1/p')" >> $GITHUB_ENV
@@ -44,6 +44,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
 
       # Upload rock to artifact ###############################################
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: ${{ env.PACKAGE }}-${{ env.VERSION }}-*

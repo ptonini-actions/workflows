@@ -28,7 +28,7 @@ jobs:
     steps:
       - run: env | sort
       - run: cat ${GITHUB_EVENT_PATH}
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       # Generate filters ######################################################
       - run: jq -r 'keys | reduce .[] as $i ({}; .[$i] = $i+"/**")' ${{ vars.release_please_manifest }} > ${{ inputs.filters }}
@@ -37,7 +37,7 @@ jobs:
         if: inputs.filters_cmd
 
       # Paths-filter action ###################################################
-      - uses: dorny/paths-filter@v2
+      - uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: ${{ inputs.filters }}
