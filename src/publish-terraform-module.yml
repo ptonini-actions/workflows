@@ -1,17 +1,22 @@
 name: publish terraform module
-concurrency:  ci-${{ github.ref }}
+
+concurrency:  ${{ github.ref }}
 
 on:
   push:
     branches:
       - main
       - master
+    paths:
+      - "**.tf"
 
 permissions:
   contents: write
 
 jobs:
   publish:
-    uses: ptonini-actions/workflows/.github/workflows/publisher--terraform-module.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/handler--terraform.yaml@main
+    with:
+      action: publish
     secrets:
       TERRAFORM_CLOUD_TOKEN: ${{ secrets.TERRAFORM_CLOUD_TOKEN }}

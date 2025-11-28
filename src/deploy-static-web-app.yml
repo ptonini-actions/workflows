@@ -1,4 +1,4 @@
-name: deploy nodejs application
+name: deploy static application
 
 concurrency:
   group: ${{ github.event_name }}
@@ -34,7 +34,7 @@ jobs:
 
   # Code verification #########################################################
   test:
-    uses: ptonini-actions/workflows/.github/workflows/tester--unit.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/tester--units.yaml@main
     if: contains('push pull-request', github.event_name) && github.event.action != 'closed' && github.event.head_commit.author.name != 'github-actions[bot]' && !vars.skip_testing
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -42,20 +42,23 @@ jobs:
     uses: ptonini-actions/workflows/.github/workflows/linter.yaml@main
     if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action) && !vars.skip_linting
   security-scan:
-    uses: ptonini-actions/workflows/.github/workflows/action--trufflehog.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/runner--trufflehog.yaml@main
     if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action)
+
+  # Versioning ################################################################
   release-please:
-    uses: ptonini-actions/workflows/.github/workflows/action--release-please.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/runner--release-please.yaml@main
     if: github.event_name == 'push'
 
   # Build application #########################################################
   build-application:
-    uses: ptonini-actions/workflows/.github/workflows/handler--node-app.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/handler--static-web-app.yaml@main
     if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action)
     with:
       action: build
       artifact_name: ${{ format('{0}.pr{1}.tgz', github.event.repository.name, github.event.number) }}
       aws_bucket: ${{ vars.staging_bucket }}
+      az_storage_account: ${{ vars.az_staging_storage_account }}
     secrets:
       VAULT_CREDENTIALS: ${{ secrets.VAULT_CREDENTIALS }}
       AWS_CREDENTIALS: ${{ secrets.AWS_CREDENTIALS }}
@@ -63,13 +66,15 @@ jobs:
 
   # Deploy to staging environment #############################################
   deploy-to-staging:
-    uses: ptonini-actions/workflows/.github/workflows/handler--node-app.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/handler--static-web-app.yaml@main
     if: ${{ !vars.skip_staging }}
     with:
       action: deploy
       artifact_name: ${{ format('{0}.pr{1}.tgz', github.event.repository.name, github.event.number) }}
+      directory: ${{ format('{1}/{2}', github.event.repository.name, github.event.number) }}
       aws_bucket: ${{ vars.staging_bucket }}
-      aws_bucket_key: ${{ format('{0}/{1}', github.event.repository.name, github.event.number) }}
+      aws_cloudfront_distribution: ${{ vars.aws_staging_cloudfront_distribution }}
+      az_storage_account: ${{ vars.az_staging_storage_account }}
     secrets:
       VAULT_CREDENTIALS: ${{ secrets.VAULT_CREDENTIALS }}
       AWS_CREDENTIALS: ${{ secrets.AWS_CREDENTIALS }}
@@ -77,12 +82,13 @@ jobs:
 
   # Destroy staging environment ###############################################
   destroy-staging:
-    uses: ptonini-actions/workflows/.github/workflows/handler--node-app.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/handler--static-web-app.yaml@main
     if: github.event_name == 'pull_request' && github.event.action == 'closed' && !vars.skip_staging
     with:
       action: destroy
-      aws_bucket: ${{ vars.staging_bucket }}
-      aws_bucket_key: ${{ format('{0}/{1}', github.event.repository.name, github.event.number) }}
+      directory: ${{ format('{1}/{2}', github.event.repository.name, github.event.number) }}
+      aws_bucket: ${{ vars.aws_staging_bucket }}
+      az_storage_account: ${{ vars.az_staging_storage_account }}
     secrets:
       VAULT_CREDENTIALS: ${{ secrets.VAULT_CREDENTIALS }}
       AWS_CREDENTIALS: ${{ secrets.AWS_CREDENTIALS }}
@@ -90,14 +96,16 @@ jobs:
 
   # Approve application build #################################################
   approve-application:
-    uses: ptonini-actions/workflows/.github/workflows/handler--node-app.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/handler--static-web-app.yaml@main
     if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged && contains(github.event.pull_request.labels.*.name, 'published')
     with:
       action: approve
       artifact_name: ${{ format('{0}.pr{1}.tgz', github.event.repository.name, github.event.number) }}
-      aws_bucket: ${{ vars.staging_bucket }}
-      aws_target_bucket: ${{ vars.aws_cloudfront_bucket }}
-      aws_target_bucket_key: ${{ format('{0}.tgz', github.event.repository.name) }}
+      target_artifact_name: ${{ format('{0}.tgz', github.event.repository.name) }}
+      aws_bucket: ${{ vars.aws_staging_bucket }}
+      aws_target_bucket: ${{ vars.aws_bucket }}
+      az_storage_account: ${{ vars.az_staging_storage_account }}
+      az_target_storage_account: ${{ vars.az_storage_account }}
     secrets:
       VAULT_CREDENTIALS: ${{ secrets.VAULT_CREDENTIALS }}
       AWS_CREDENTIALS: ${{ secrets.AWS_CREDENTIALS }}
@@ -105,13 +113,15 @@ jobs:
 
   # Deploy to production ######################################################
   deploy-to-production:
-    uses: ptonini-actions/workflows/.github/workflows/handler--node-app.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/handler--static-web-app.yaml@main
     if: "github.event_name == 'push' && contains(github.event.commits[0].author.name, 'github-actions[bot]') && contains(github.event.commits[0].message, 'chore(main): release')"
     with:
       action: deploy
       artifact_name: ${{ format('{0}.tgz', github.event.repository.name) }}
-      aws_bucket: ${{ vars.aws_cloudfront_bucket }}
+      aws_bucket: ${{ vars.aws_bucket }}
       aws_cloudfront_distribution: ${ vars.aws_cloudfront_distribution }}
+      az_storage_account: ${{ vars.az_storage_account }}
+      az_frontdoor_endpoint: ${{ vars.az_frontdoor_endpoint }}
     secrets:
       VAULT_CREDENTIALS: ${{ secrets.VAULT_CREDENTIALS }}
       AWS_CREDENTIALS: ${{ secrets.AWS_CREDENTIALS }}

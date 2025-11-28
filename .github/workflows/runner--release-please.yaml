@@ -1,18 +1,18 @@
-name: release please
+name: release please runner
 
 on:
   workflow_call:
     outputs:
       releases_created:
         description: ''
-        value: ${{ jobs.release_please.outputs.releases_created }}
+        value: ${{ jobs.runner.outputs.releases_created }}
       paths_released:
         description: ''
-        value: ${{ jobs.release_please.outputs.paths_released }}
+        value: ${{ jobs.runner.outputs.paths_released }}
 
 
 jobs:
-  release-please:
+  runner:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort

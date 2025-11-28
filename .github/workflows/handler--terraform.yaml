@@ -7,6 +7,11 @@ on:
         description: ''
         required: true
         type: string
+      tag_partial_versions:
+        description: ''
+        required: false
+        default: false
+        type: boolean
       plan_filename:
         description: ''
         required: false
@@ -23,6 +28,9 @@ on:
         default: ${{ vars.ovpn_validation_addr }}
         type: string
     secrets:
+      TERRAFORM_CLOUD_TOKEN:
+        description: ''
+        required: false
       OPENVPN_CONFIG:
         description: ''
         required: false
@@ -59,7 +67,8 @@ jobs:
       - uses: actions/checkout@v4
 
       # Connect to VPN ########################################################
-      - uses: ptonini-actions/openvpn@v1
+      - if: secrets.OPENVPN_CONFIG
+        uses: ptonini-actions/openvpn@v1
         with:
           openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
           validation_addr: ${{ inputs.ovpn_validation_addr }}
@@ -73,29 +82,31 @@ jobs:
           openstack_config: ${{ secrets.OPENSTACK_CONFIG }}
 
       # Initialize terraform ##################################################
-      - run: terraform init -input=false
-      - run: echo '${{ secrets.TFVARS }}' > terraform.tfvars.json
+      - name: initialize module
+        run: terraform init -input=false && echo '${{ secrets.TFVARS }}' > terraform.tfvars.json
+        env:
+          TF_TOKEN_app_terraform_io: ${{ secrets.TERRAFORM_CLOUD_TOKEN }}
+
+      # Publish module release ################################################
+      - if: inputs.action == 'publish'
+        run: terraform validate
+      - if: inputs.action == 'publish'
+        uses: ptonini-actions/create-release@v1
+        with:
+          tag_partial_versions: ${{ inputs.tag_partial_versions }}
 
       # Create plan ###########################################################
       - if: inputs.action == 'plan'
         run: terraform plan -out=${{ inputs.plan_filename }} -no-color -input=false -detailed-exitcode
         id: plan
         continue-on-error: true
-
-      # Generate resumed plan view ############################################
       - if: inputs.action == 'plan' && hashFiles(inputs.terraform_plan_filename)
         run: terraform show -no-color ${{ inputs.plan_filename }}
         id: show
-
-      # Save outputs to step summary and pr comments ##########################
       - if: inputs.action == 'plan'
         run: echo '```${{ steps.show.outputs.stdout }}${{ steps.plan.outputs.stderr }}```' >> $GITHUB_STEP_SUMMARY
       - if: inputs.action == 'plan'
         run: gh pr comment ${{ github.event.number }} --edit-last --body '```${{ steps.show.outputs.stdout }}${{ steps.plan.outputs.stderr }}```'
-        env:
-          GH_TOKEN: ${{ github.token }}
-
-      # Upload plan to artifact and set labels ################################
       - if: inputs.action == 'plan' && steps.plan.outputs.exitcode == '2'
         uses: actions/upload-artifact@v4
         with:
@@ -110,12 +121,10 @@ jobs:
           labels: |
             plan_created
             plan_run_id: ${{ github.run_id }}
-
-      # Break job if plan has failed ##########################################
       - if: inputs.action == 'plan' && steps.plan.outputs.exitcode == '1'
         run: exit 1
 
-      # Fetch approved plan ###################################################
+      # Apply plan ############################################################
       - if: inputs.action == 'apply'
         uses: ptonini-actions/get-labels@v1
         with:
@@ -126,8 +135,6 @@ jobs:
           name: plan
           run_id: ${{ env.PLANNED_RUN_ID }}
           github_token: ${{ secrets.GH_TOKEN }}
-
-      # Apply plan ############################################################
       - if: inputs.action == 'apply'
         run: terraform apply -auto-approve -input=false ${{ inputs.plan_filename }}
         id: apply

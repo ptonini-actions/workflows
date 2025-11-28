@@ -1,0 +1,46 @@
+name: publish helm charts
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - charts/**
+      - library-charts/**
+
+permissions:
+  pull-requests: write
+  contents: write
+
+jobs:
+  detect-changes:
+    uses: linxsa/gha-workflows/.github/workflows/runner--paths-filter.yaml@main
+    if: github.event_name == 'pull_request'
+
+  release-please:
+    uses: linxsa/gha-workflows/.github/workflows/runner--release-please.yaml@main
+    if: github.event_name == 'push'
+  publish:
+    uses: linxsa/gha-workflows/.github/workflows/publisher--helm-chart.yaml@main
+    if: needs.release-please.outputs.paths_released != '[]'
+    needs:
+      - release-please
+    strategy:
+      matrix:
+        context: ${{ fromJSON(needs.release-please.outputs.paths_released) }}
+    with:
+      context: ${{ matrix.context }}
+    secrets:
+      REPOSITORY_USERNAME: ${{ secrets.REPOSITORY_USERNAME }}
+      REPOSITORY_PASSWORD: ${{ secrets.REPOSITORY_PASSWORD }}
+  update-dependencies:
+    uses: linxsa/gha-workflows/.github/workflows/dependency-updater--helm-charts.yaml@main
+    if: needs.release-please.outputs.paths_released != '[]'
+    needs:
+      - publish
+      - release-please
+    strategy:
+      matrix:
+        context: ${{ fromJSON(needs.release-please.outputs.paths_released) }}
+    with:
+      context: ${{ matrix.context }}

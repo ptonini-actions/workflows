@@ -1,0 +1,73 @@
+name: lua rock handler
+on:
+  workflow_call:
+    inputs:
+      action:
+        description: ''
+        required: true
+        type: string
+      context:
+        description: ''
+        required: false
+        default: '.'
+        type: string
+      release_please_manifest:
+        description: ''
+        required: false
+        default: ${{ vars.release_please_manifest }}
+        type: string
+      lua_version:
+        description: ''
+        required: false
+        default: ${{ vars.lua_version }}
+        type: string
+
+
+jobs:
+  handler:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
+      - uses: leafo/gh-actions-lua@v10
+        with:
+          luaVersion: ${{ inputs.lua_version }}
+      - uses: leafo/gh-actions-luarocks@v4
+      - uses: actions/checkout@v4
+
+      # Generate context variables ############################################
+      - if: inputs.context != ''
+        name: generate context variables
+        run: | 
+          echo "PACKAGE=$(cat rockspec | sed -rn 's/^package = "(.*)"$/\1/p')" | tee -a $GITHUB_ENV
+          echo "VERSION=$(jq -r '."${{ inputs.context }}"' ${{ inputs.release_please_manifest }})" | tee -a $GITHUB_ENV
+
+      # Build & publish rock ##################################################
+      - if: inputs.action == 'build & publish'
+        name: build & publish lua rock
+        run: |
+          tar -czvC rocks -f ${{ inputs.context }}.tar.gz ${PACKAGE}
+          envsubst < ${{ inputs.context }}/rockspec > ${PACKAGE}-${VERSION}-1.rockspec
+          luarocks pack ${PACKAGE}-${VERSION}-1.rockspec
+          gh release upload --clobber ${PACKAGE}-v${VERSION} ${PACKAGE}-${VERSION}-*
+      - if: inputs.action == 'build & publish'
+        uses: actions/upload-artifact@v4
+        with:
+          path: ${{ env.PACKAGE }}-${{ env.VERSION }}-*
+
+      # Update repository #####################################################
+      - if: inputs.action == 'update repository'
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+      - if: inputs.action == 'update repository'
+        uses: actions/download-artifact@v4
+      - if: inputs.action == 'update repository'
+        name: create repository manifest
+        run: luarocks-admin make-manifest --local-tree ${{ github.workspace }}
+      - if: inputs.action == 'update repository'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: .

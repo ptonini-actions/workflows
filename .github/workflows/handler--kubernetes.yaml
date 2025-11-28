@@ -44,7 +44,6 @@ on:
       kubernetes_cluster_name:
         description: ''
         required: false
-        default: ${{ vars.kubernetes_cluster_name }}
         type: string
       kubeconfig_source:
         description: ''
@@ -89,6 +88,9 @@ on:
       AWS_CREDENTIALS:
         description: ''
         required: false
+      OPENSTACK_CONFIG:
+        description: ''
+        required: false
       GH_READER_TOKEN:
         description: ''
         required: false
@@ -108,7 +110,7 @@ jobs:
       - run: cat ${GITHUB_EVENT_PATH}
 
       # Connect to VPN ########################################################
-      - if: inputs.ovpn_validation_addr != ''
+      - if: secrets.OPENVPN_CONFIG != ''
         uses: ptonini-actions/openvpn@v1
         with:
           openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
@@ -120,6 +122,7 @@ jobs:
           vault_credentials: ${{ secrets.VAULT_CREDENTIALS }}
           aws_credentials: ${{ secrets.AWS_CREDENTIALS }}
           azure_credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          openstack_config: ${{ secrets.OPENSTACK_CONFIG }}
 
       # Generate kubeconfig file ##############################################
       - uses: ptonini-actions/get-kubeconfig@v1

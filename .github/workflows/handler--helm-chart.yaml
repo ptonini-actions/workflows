@@ -1,0 +1,97 @@
+name: helm chart handler
+
+on:
+  workflow_call:
+    inputs:
+      action:
+        description: ''
+        required: true
+        type: string
+      context:
+        description: ''
+        required: false
+        type: string
+      repository_url:
+        description: ''
+        required: false
+        type: string
+      gh_pages_owner:
+        description: ''
+        required: false
+        type: string
+      gh_pages_repository:
+        description: ''
+        required: false
+        type: string
+    secrets:
+      REPOSITORY_USERNAME:
+        description: ''
+        required: false
+      REPOSITORY_PASSWORD:
+        description: ''
+        required: false
+
+jobs:
+  handler:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
+      - uses: ptonini-actions/config-git-user@v1
+      - uses: helm/chart-releaser-action@v1
+        with:
+          install_only: true
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      # Generate context variables ############################################
+      - if: inputs.context != ''
+        name: generate context variables
+        run: |
+          echo "CHART=$(helm show chart ${{ inputs.context }} | sed -rn 's/^name: (.*)$/\1/p')" | tee -a $GITHUB_ENV
+          echo "VERSION=$(helm show chart ${{ inputs.context }} | sed -rn 's/^version: (.*)$/\1/p')" | tee -a $GITHUB_ENV
+
+      # Build & publish helm package ##########################################
+      - if: inputs.action == 'build & publish'
+        name: build & publish helm package
+        run: |  
+          helm package --dependency-update ${{ inputs.context }}
+          gh release upload --clobber ${CHART}-v${VERSION} ${CHART}-v${VERSION} ${CHART}-v${VERSION}.tgz
+      - if: inputs.action == 'build & publish'
+        uses: actions/upload-artifact@v5
+        with:
+          path: ${{ format('{0}-v{1}.tgz', env.CHART, env.VERSION) }}
+      - if: inputs.action == 'build & publish' && inputs.repository_url != ''
+        run: curl -u "${{ secrets.REPOSITORY_USERNAME }}:${{ secrets.REPOSITORY_PASSWORD }}" --data-binary "@${CHART}-${VERSION}.tgz" ${{ inputs.chartmuseum_url }}/api/charts
+
+      # Update GitHup Pages repository ########################################
+      - if: inputs.action == 'update repository' && inputs.gh_pages_owner != ''
+        uses: actions/download-artifact@v6
+        with:
+          path: ${{ github.workspace }}/builds
+      - if: inputs.action == 'update github pages'
+        run: cr index -p builds -i index.yaml -o ${{ inputs.gh_pages_owner }} -t ${{ env.GH_TOKEN && env.GH_TOKEN || github.token }} -r ${{ inputs.gh_pages_repository }} --push --release-name-template "{{ .Name }}-v{{ .Version }}"
+
+      # Update dependencies in related charts #################################
+      - if: inputs.action == 'update dependencies' && !contains('library-charts', inputs.context)
+        name: update dependencies
+        run: |
+          pip3 install yq
+          export BRANCH=dependency-update/${CHART}-v${VERSION}
+          for C in $(find ./charts -name "Chart.yaml"); do
+            echo "reading ${C}"
+            yq --arg chart ${CHART} --arg version ${VERSION} -yi '(try .dependencies[] | select(.name==$chart).version) |= $version' ${C}
+          done
+          if [[ $(git diff --name-only | wc -l) != 0 ]]; then 
+            git checkout -b ${BRANCH}
+            echo "----- updated charts -----"
+            git diff --name-only
+            echo "--------------------------"
+            git add .
+            git commit -m "deps: updated dependency ${CHART} to ${VERSION}"
+            git push origin -u ${BRANCH}
+            gh pr create --fill --no-maintainer-edit
+          fi

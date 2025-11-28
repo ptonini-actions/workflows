@@ -34,7 +34,7 @@ jobs:
 
   # Code verification #########################################################
   test:
-    uses: ptonini-actions/workflows/.github/workflows/tester--unit.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/tester--units.yaml@main
     if: contains('push pull-request', github.event_name) && github.event.action != 'closed' && github.event.head_commit.author.name != 'github-actions[bot]' && !vars.skip_testing
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -42,10 +42,12 @@ jobs:
     uses: ptonini-actions/workflows/.github/workflows/linter.yaml@main
     if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action) && !vars.skip_linting
   security-scan:
-    uses: ptonini-actions/workflows/.github/workflows/action--trufflehog.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/runner--trufflehog.yaml@main
     if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action)
+
+  # Versioning ################################################################
   release-please:
-    uses: ptonini-actions/workflows/.github/workflows/action--release-please.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/runner--release-please.yaml@main
     if: github.event_name == 'push'
 
   # Build and publish docker image ############################################
@@ -68,6 +70,7 @@ jobs:
       - publish-image
     with:
       action: deploy helm
+      kubernetes_cluster_name: ${{ vars.kubernetes_staging_cluster_name }}
       environment: staging
       digest: ${{ needs.publish_image.outputs.digest }}
     secrets:
@@ -118,6 +121,7 @@ jobs:
       - promote-image
     with:
       action: deploy helm
+      kubernetes_cluster_name: ${{ vars.kubernetes_cluster_name }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
       GH_READER_TOKEN: ${{ secrets.GH_READER_TOKEN }}

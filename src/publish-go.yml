@@ -14,7 +14,7 @@ jobs:
   
   # Code verification #########################################################
   test:
-    uses: ptonini-actions/workflows/.github/workflows/tester--unit.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/tester--unitss.yaml@main
     if: github.event.action != 'closed' && github.event.head_commit.author.name != 'github-actions[bot]' && !vars.skip_testing
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -22,10 +22,10 @@ jobs:
     uses: ptonini-actions/workflows/.github/workflows/linter.yaml@main
     if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action) && !vars.skip_linting
   security-scan:
-    uses: ptonini-actions/workflows/.github/workflows/action--trufflehog.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/runner--trufflehog.yaml@main
     if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action)
   release-please:
-    uses: ptonini-actions/workflows/.github/workflows/action--release-please.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/runner--release-please.yaml@main
     if: github.event_name == 'push'
 
   publish:

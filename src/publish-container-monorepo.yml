@@ -10,11 +10,11 @@ on:
 
 jobs:
   detect-changes:
-    uses: ptonini-actions/workflows/.github/workflows/action--paths-filter.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/runner--paths-filter.yaml@main
     if: github.event_name == 'pull_request'
 
   release-please:
-    uses: ptonini-actions/workflows/.github/workflows/action--release-please.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/runner--release-please.yaml@main
     if: github.event_name == 'push'
 
   publish:
