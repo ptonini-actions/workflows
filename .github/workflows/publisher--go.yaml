@@ -30,7 +30,7 @@ jobs:
     steps:
       - run: env | sort
       - run: cat ${GITHUB_EVENT_PATH}
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # Extract version from release-please manifest file #####################
       - run: echo "VERSION=$(jq -r '."."' < ${{ inputs.release_please_manifest }})" | tee -a $GITHUB_ENV

@@ -3,7 +3,7 @@ name: paths filter runner
 on:
   workflow_call:
     inputs:
-      filters:
+      filter_file:
         description: ''
         default: filters.yaml
         required: false
@@ -15,7 +15,7 @@ on:
       release_please_manifest:
         description: ''
         required: false
-        default: ${{ vars.release_please_manifest }}
+        default: .release-please-manifest.json
         type: string
     outputs:
       changes:
@@ -28,18 +28,22 @@ jobs:
     steps:
       - run: env | sort
       - run: cat ${GITHUB_EVENT_PATH}
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # Generate filters ######################################################
-      - run: jq -r 'keys | reduce .[] as $i ({}; .[$i] = $i+"/**")' ${{ inputs.release_please_manifest }} > ${{ inputs.filters }}
+      - run: jq -r 'keys | reduce .[] as $i ({}; .[$i] = $i+"/**")' ${{ inputs.release_please_manifest }} > ${{ inputs.filter_file }}
         if: hashFiles(inputs.release_please_manifest)
-      - run: ${{ inputs.filters_cmd }} > ${{ inputs.filters }}
+      - run: ${{ inputs.filters_cmd }} > ${{ inputs.filter_file }}
         if: inputs.filters_cmd
 
       # Paths-filter action ###################################################
       - uses: dorny/paths-filter@v3
         id: filter
         with:
-          filters: ${{ inputs.filters }}
+          filters: ${{ inputs.filter_file }}
+      - run: |
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          echo '${{ toJson(steps.filter.outputs) }}' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
     outputs:
       changes: ${{ steps.filter.outputs.changes }}

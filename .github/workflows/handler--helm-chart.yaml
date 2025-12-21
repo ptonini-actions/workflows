@@ -23,7 +23,12 @@ on:
       gh_pages_repository:
         description: ''
         required: false
-        gh_pages_repository: ${{ github.event.repository.name }}
+        default: ${{ github.event.repository.name }}
+        type: string
+      charts_folder:
+        description: ''
+        required: false
+        default: ./charts
         type: string
     secrets:
       CHARTMUSEUM_USERNAME:
@@ -49,10 +54,8 @@ jobs:
         with:
           fetch-depth: 0
 
-
-
       # Generate context variables ############################################
-      - if: inputs.context != ''
+      - if: inputs.context
         name: generate context variables
         run: |
           echo "CHART=$(helm show chart ${{ inputs.context }} | sed -rn 's/^name: (.*)$/\1/p')" | tee -a $GITHUB_ENV
@@ -60,40 +63,42 @@ jobs:
 
       # Build helm package ####################################################
       - if: inputs.action == 'build'
-        name: build & publish helm package
+        name: build helm package
         run: |  
           helm package --dependency-update ${{ inputs.context }}
-          gh release upload --clobber ${CHART}-v${VERSION} ${CHART}-v${VERSION} ${CHART}-v${VERSION}.tgz
+          gh release upload --clobber ${CHART}-v${VERSION} ${CHART}-${VERSION}.tgz
       - if: inputs.action == 'build'
         uses: actions/upload-artifact@v6
         with:
-          path: ${{ format('{0}-v{1}.tgz', env.CHART, env.VERSION) }}
+          name: ${{ format('{0}-{1}.tgz', env.CHART, env.VERSION) }}
+          path: ${{ format('{0}-{1}.tgz', env.CHART, env.VERSION) }}
 
       # Publish helm package ##################################################
       - if: inputs.action == 'publish'
         uses: actions/download-artifact@v7
         with:
           path: ${{ github.workspace }}/builds
+          merge-multiple: true
 
       ### Publish to Chartmuseum ##########################
-      - if: inputs.action == 'publish' && inputs.chartmuseum_url != ''
-        run: curl -u "${{ secrets.CHARTMUSEUM_USERNAME }}:${{ secrets.CHARTMUSEUM_PASSWORD }}" --data-binary ${{ github.workspace }}/builds/"@${CHART}-${VERSION}.tgz" ${{ inputs.chartmuseum_url }}/api/charts
+      - if: inputs.action == 'publish' && inputs.chartmuseum_url
+        run: find ${{ github.workspace }}/builds -iname '*.tgz' -type f -exec curl -u "${{ secrets.CHARTMUSEUM_USERNAME }}:${{ secrets.CHARTMUSEUM_PASSWORD }}" --data-binary "@{}" ${{ inputs.chartmuseum_url }}/api/charts
 
       #### Update GitHup Pages repository #################
-      - if: inputs.action == 'publish' &&&& inputs.chartmuseum_url == ''
-        run: cr index -p builds -i index.yaml -o ${{ inputs.gh_pages_owner }} -t ${{ env.GH_TOKEN && env.GH_TOKEN || github.token }} -r ${{ inputs.gh_pages_repository }} --push --release-name-template "{{ .Name }}-v{{ .Version }}"
+      - if: inputs.action == 'publish' && !inputs.chartmuseum_url
+        run: cr index -p "${{ github.workspace }}/builds" -i index.yaml -o ${{ inputs.gh_pages_owner }} -t ${{ env.GH_TOKEN && env.GH_TOKEN || github.token }} -r ${{ inputs.gh_pages_repository }} --push --release-name-template "{{ .Name }}-v{{ .Version }}"
 
       # Update dependencies in related charts #################################
       - if: inputs.action == 'update dependencies'
         name: update dependencies
         run: |
           pip3 install yq
-          export BRANCH=dependency-update/${CHART}-v${VERSION}
-          for C in $(find ./charts -name "Chart.yaml"); do
+          for C in $(find {{ inputs.charts_folder }} -name "Chart.yaml"); do
             echo "reading ${C}"
             yq --arg chart ${CHART} --arg version ${VERSION} -yi '(try .dependencies[] | select(.name==$chart).version) |= $version' ${C}
           done
           if [[ $(git diff --name-only | wc -l) != 0 ]]; then
+            export BRANCH=dependency-update/${CHART}-v${VERSION}
             git checkout -b ${BRANCH}
             echo "----- updated charts -----"
             git diff --name-only

@@ -31,11 +31,11 @@ jobs:
     steps:
       - run: env | sort
       - run: cat ${GITHUB_EVENT_PATH}
-      - uses: leafo/gh-actions-lua@v10
+      - uses: leafo/gh-actions-lua@v12
         with:
           luaVersion: ${{ inputs.lua_version }}
-      - uses: leafo/gh-actions-luarocks@v4
-      - uses: actions/checkout@v4
+      - uses: leafo/gh-actions-luarocks@v6
+      - uses: actions/checkout@v6
 
       # Generate context variables ############################################
       - if: inputs.context != ''
@@ -53,17 +53,17 @@ jobs:
           luarocks pack ${PACKAGE}-${VERSION}-1.rockspec
           gh release upload --clobber ${PACKAGE}-v${VERSION} ${PACKAGE}-${VERSION}-*
       - if: inputs.action == 'build & publish'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           path: ${{ env.PACKAGE }}-${{ env.VERSION }}-*
 
       # Update repository #####################################################
       - if: inputs.action == 'update repository'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: gh-pages
       - if: inputs.action == 'update repository'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
       - if: inputs.action == 'update repository'
         name: create repository manifest
         run: luarocks-admin make-manifest --local-tree ${{ github.workspace }}

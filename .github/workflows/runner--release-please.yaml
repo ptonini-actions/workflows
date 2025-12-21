@@ -10,7 +10,6 @@ on:
         description: ''
         value: ${{ jobs.runner.outputs.paths_released }}
 
-
 jobs:
   runner:
     runs-on: ubuntu-latest
@@ -19,3 +18,11 @@ jobs:
       - run: cat ${GITHUB_EVENT_PATH}
       - uses: googleapis/release-please-action@v4
         id: release_please
+      - run: |
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          [[ "${{ steps.release_please.outputs.releases_created }}" == "true" ]] && echo '${{ toJson(steps.release_please.outputs) }}' >> $GITHUB_STEP_SUMMARY
+          [[ "${{ steps.release_please.outputs.prs_created }}" == "true" ]] && echo '${{ steps.release_please.outputs.prs }}' | jq >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+    outputs:
+      releases_created: ${{ steps.release_please.outputs.releases_created }}
+      paths_released: ${{ steps.release_please.outputs.paths_released }}

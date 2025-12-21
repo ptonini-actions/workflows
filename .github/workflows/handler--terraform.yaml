@@ -64,7 +64,7 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ inputs.terraform_version }}
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # Connect to VPN ########################################################
       - if: secrets.OPENVPN_CONFIG
@@ -108,7 +108,7 @@ jobs:
       - if: inputs.action == 'plan'
         run: gh pr comment ${{ github.event.number }} --edit-last --body '```${{ steps.show.outputs.stdout }}${{ steps.plan.outputs.stderr }}```'
       - if: inputs.action == 'plan' && steps.plan.outputs.exitcode == '2'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: plan
           path: ${{ inputs.plan_filename }}
@@ -130,7 +130,7 @@ jobs:
         with:
           labels: plan_run_id
       - if: inputs.action == 'apply'
-        uses: dawidd6/action-download-artifact@v7
+        uses: dawidd6/action-download-artifact@v11
         with:
           name: plan
           run_id: ${{ env.PLANNED_RUN_ID }}
