@@ -11,23 +11,25 @@ on:
         description: ''
         required: false
         type: string
-      repository_url:
+      chartmuseum_url:
         description: ''
         required: false
         type: string
       gh_pages_owner:
         description: ''
         required: false
+        default: ${{ github.repository_owner }}
         type: string
       gh_pages_repository:
         description: ''
         required: false
+        gh_pages_repository: ${{ github.event.repository.name }}
         type: string
     secrets:
-      REPOSITORY_USERNAME:
+      CHARTMUSEUM_USERNAME:
         description: ''
         required: false
-      REPOSITORY_PASSWORD:
+      CHARTMUSEUM_PASSWORD:
         description: ''
         required: false
 
@@ -47,6 +49,8 @@ jobs:
         with:
           fetch-depth: 0
 
+
+
       # Generate context variables ############################################
       - if: inputs.context != ''
         name: generate context variables
@@ -54,29 +58,33 @@ jobs:
           echo "CHART=$(helm show chart ${{ inputs.context }} | sed -rn 's/^name: (.*)$/\1/p')" | tee -a $GITHUB_ENV
           echo "VERSION=$(helm show chart ${{ inputs.context }} | sed -rn 's/^version: (.*)$/\1/p')" | tee -a $GITHUB_ENV
 
-      # Build & publish helm package ##########################################
-      - if: inputs.action == 'build & publish'
+      # Build helm package ####################################################
+      - if: inputs.action == 'build'
         name: build & publish helm package
         run: |  
           helm package --dependency-update ${{ inputs.context }}
           gh release upload --clobber ${CHART}-v${VERSION} ${CHART}-v${VERSION} ${CHART}-v${VERSION}.tgz
-      - if: inputs.action == 'build & publish'
-        uses: actions/upload-artifact@v5
+      - if: inputs.action == 'build'
+        uses: actions/upload-artifact@v6
         with:
           path: ${{ format('{0}-v{1}.tgz', env.CHART, env.VERSION) }}
-      - if: inputs.action == 'build & publish' && inputs.repository_url != ''
-        run: curl -u "${{ secrets.REPOSITORY_USERNAME }}:${{ secrets.REPOSITORY_PASSWORD }}" --data-binary "@${CHART}-${VERSION}.tgz" ${{ inputs.chartmuseum_url }}/api/charts
 
-      # Update GitHup Pages repository ########################################
-      - if: inputs.action == 'update repository' && inputs.gh_pages_owner != ''
-        uses: actions/download-artifact@v6
+      # Publish helm package ##################################################
+      - if: inputs.action == 'publish'
+        uses: actions/download-artifact@v7
         with:
           path: ${{ github.workspace }}/builds
-      - if: inputs.action == 'update github pages'
+
+      ### Publish to Chartmuseum ##########################
+      - if: inputs.action == 'publish' && inputs.chartmuseum_url != ''
+        run: curl -u "${{ secrets.CHARTMUSEUM_USERNAME }}:${{ secrets.CHARTMUSEUM_PASSWORD }}" --data-binary ${{ github.workspace }}/builds/"@${CHART}-${VERSION}.tgz" ${{ inputs.chartmuseum_url }}/api/charts
+
+      #### Update GitHup Pages repository #################
+      - if: inputs.action == 'publish' &&&& inputs.chartmuseum_url == ''
         run: cr index -p builds -i index.yaml -o ${{ inputs.gh_pages_owner }} -t ${{ env.GH_TOKEN && env.GH_TOKEN || github.token }} -r ${{ inputs.gh_pages_repository }} --push --release-name-template "{{ .Name }}-v{{ .Version }}"
 
       # Update dependencies in related charts #################################
-      - if: inputs.action == 'update dependencies' && !contains('library-charts', inputs.context)
+      - if: inputs.action == 'update dependencies'
         name: update dependencies
         run: |
           pip3 install yq
@@ -85,7 +93,7 @@ jobs:
             echo "reading ${C}"
             yq --arg chart ${CHART} --arg version ${VERSION} -yi '(try .dependencies[] | select(.name==$chart).version) |= $version' ${C}
           done
-          if [[ $(git diff --name-only | wc -l) != 0 ]]; then 
+          if [[ $(git diff --name-only | wc -l) != 0 ]]; then
             git checkout -b ${BRANCH}
             echo "----- updated charts -----"
             git diff --name-only

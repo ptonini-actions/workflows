@@ -33,8 +33,8 @@ permissions:
 jobs:
 
   # Code verification #########################################################
-  test:
-    uses: ptonini-actions/workflows/.github/workflows/tester--units.yaml@main
+  unit-tests:
+    uses: ptonini-actions/workflows/.github/workflows/tester--unit-testing.yaml@main
     if: contains('push pull-request', github.event_name) && github.event.action != 'closed' && github.event.head_commit.author.name != 'github-actions[bot]' && !vars.skip_testing
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -80,7 +80,7 @@ jobs:
       AWS_CREDENTIALS: ${{ secrets.AWS_CREDENTIALS }}
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
   performance-testing:
-    uses: ptonini-actions/workflows/.github/workflows/tester--performance.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/tester--performance-testing.yaml@main
     if: vars.performance_testing
     needs:
       - deploy-to-staging

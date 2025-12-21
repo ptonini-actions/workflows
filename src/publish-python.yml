@@ -13,8 +13,8 @@ on:
 jobs:
   
   # Code verification #########################################################
-  test:
-    uses: ptonini-actions/workflows/.github/workflows/tester--units.yaml@main
+  unit-tests:
+    uses: ptonini-actions/workflows/.github/workflows/tester--unit-testing.yaml@main
     if: github.event.action != 'closed' && github.event.head_commit.author.name != 'github-actions[bot]' && !vars.skip_testing
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
