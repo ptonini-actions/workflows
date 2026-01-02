@@ -1,4 +1,4 @@
-name: lua rock handler
+name: lua rock workflow
 on:
   workflow_call:
     inputs:
@@ -24,7 +24,7 @@ on:
 
 
 jobs:
-  handler:
+  lua-rock-workflow:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}

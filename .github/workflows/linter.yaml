@@ -1,10 +1,10 @@
-name: code linter
+name: linter workflow
 
 on:
   workflow_call:
 
 jobs:
-  linter:
+  linter-workflow:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort

@@ -1,4 +1,4 @@
-name: terraform handler
+name: terraform workflow
 
 on:
   workflow_call:
@@ -54,7 +54,7 @@ on:
         required: false
 
 jobs:
-  handler:
+  terraform-workflow:
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}

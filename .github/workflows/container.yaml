@@ -1,4 +1,4 @@
-name: container handler
+name: container workflow
 
 on:
   workflow_call:
@@ -70,7 +70,7 @@ env:
   TAGS: ''
 
 jobs:
-  handler:
+  container-workflow:
     runs-on: ubuntu-latest
 
     steps:

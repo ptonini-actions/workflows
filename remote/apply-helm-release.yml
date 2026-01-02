@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   apply:
-    uses: ptonini-actions/workflows/.github/workflows/handler--kubernetes.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/kubernetes.yaml@main
     with:
       action: deploy helm
       environment: ${{ github.event_name == 'pull_request' && 'staging' || 'production' }}

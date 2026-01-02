@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   publish:
-    uses: ptonini-actions/workflows/.github/workflows/handler--terraform.yaml@main
+    uses: ptonini-actions/workflows/.github/workflows/terraform.yaml@main
     with:
       action: publish
     secrets:

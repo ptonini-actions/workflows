@@ -1,0 +1,45 @@
+name: publish helm chart
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - charts/**
+      - library-charts/**
+
+permissions:
+  pull-requests: write
+  contents: write
+
+jobs:
+  detect_changes:
+    uses: ptonini-actions/workflows/.github/workflows/paths-filter.yaml@main
+    if: github.event_name == 'pull_request'
+
+  release_please:
+    uses: ptonini-actions/workflows/.github/workflows/release-please.yaml@main
+    if: github.event_name == 'push'
+
+  build:
+    uses: ptonini-actions/workflows/.github/workflows/helm-chart.yaml@main
+    if: needs.release_please.outputs.paths_released != '[]'
+    needs:
+      - release_please
+    strategy:
+      matrix:
+        context: ${{ fromJSON(needs.release_please.outputs.paths_released) }}
+    with:
+      action: build
+      context: ${{ matrix.context }}
+
+  publish:
+    uses: ptonini-actions/workflows/.github/workflows/helm-chart.yaml@main
+    needs:
+      - build_package
+    with:
+      action: publish
+    secrets:
+      CHARTMUSEUM_USERNAME: ${{ secrets.CHARTMUSEUM_USERNAME }}
+      CHARTMUSEUM_PASSWORD: ${{ secrets.CHARTMUSEUM_PASSWORD }}

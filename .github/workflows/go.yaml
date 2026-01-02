@@ -1,4 +1,4 @@
-name: go publisher
+name: go workflow
 
 on:
   workflow_call:
@@ -25,7 +25,7 @@ on:
         type: string
 
 jobs:
-  publisher:
+  go-workflow:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort

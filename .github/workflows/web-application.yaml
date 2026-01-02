@@ -1,4 +1,4 @@
-name: static web application handler
+name: web application workflow
 
 on:
   workflow_call:
@@ -88,7 +88,7 @@ on:
         description: ''
         required: false
 jobs:
-  handler:
+  web-application-workflow:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort

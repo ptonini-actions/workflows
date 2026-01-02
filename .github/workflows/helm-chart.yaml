@@ -1,4 +1,4 @@
-name: helm chart handler
+name: helm chart workflow
 
 on:
   workflow_call:
@@ -39,7 +39,7 @@ on:
         required: false
 
 jobs:
-  handler:
+  helm-chart-workflow:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
@@ -47,6 +47,7 @@ jobs:
       - run: env | sort
       - run: cat ${GITHUB_EVENT_PATH}
       - uses: ptonini-actions/config-git-user@v1
+      - uses: helm/chart-testing-action@v2
       - uses: helm/chart-releaser-action@v1
         with:
           install_only: true
@@ -61,7 +62,14 @@ jobs:
           echo "CHART=$(helm show chart ${{ inputs.context }} | sed -rn 's/^name: (.*)$/\1/p')" | tee -a $GITHUB_ENV
           echo "VERSION=$(helm show chart ${{ inputs.context }} | sed -rn 's/^version: (.*)$/\1/p')" | tee -a $GITHUB_ENV
 
-      # Build helm package ####################################################
+      # Test helm chart #######################################################
+      - if: inputs.action == 'test'
+        uses: helm/kind-action@v1
+
+      - if: inputs.action == 'test'
+        run: ct install --chart-dirs ${{ inputs.context }}
+
+      # Build helm chart ######################################################
       - if: inputs.action == 'build'
         name: build helm package
         run: |  
@@ -73,7 +81,7 @@ jobs:
           name: ${{ format('{0}-{1}.tgz', env.CHART, env.VERSION) }}
           path: ${{ format('{0}-{1}.tgz', env.CHART, env.VERSION) }}
 
-      # Publish helm package ##################################################
+      # Publish helm chart ####################################################
       - if: inputs.action == 'publish'
         uses: actions/download-artifact@v7
         with:

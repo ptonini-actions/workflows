@@ -37,7 +37,7 @@ env:
   JAVASCRIPT_LCOV_INFO: lcov.info
 
 jobs:
-  tester:
+  unit-tester:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort

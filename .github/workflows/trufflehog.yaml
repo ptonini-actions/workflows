@@ -1,10 +1,10 @@
-name: trufflehog runner
+name: trufflehog
 
 on:
   workflow_call:
   
 jobs:
-  runner:
+  trufflehog-runner:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort

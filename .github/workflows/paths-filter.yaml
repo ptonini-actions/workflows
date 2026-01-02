@@ -1,4 +1,4 @@
-name: paths filter runner
+name: paths filter workflow
 
 on:
   workflow_call:
@@ -23,7 +23,7 @@ on:
         value: ${{ jobs.runner.outputs.changes }}
 
 jobs:
-  runner:
+  paths-filter-workflow:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort

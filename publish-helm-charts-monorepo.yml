@@ -14,11 +14,11 @@ permissions:
 
 jobs:
   detect-changes:
-    uses: linxsa/gha-workflows/.github/workflows/runner--paths-filter.yaml@main
+    uses: linxsa/gha-workflows/.github/workflows/paths-filter.yaml@main
     if: github.event_name == 'pull_request'
 
   release-please:
-    uses: linxsa/gha-workflows/.github/workflows/runner--release-please.yaml@main
+    uses: linxsa/gha-workflows/.github/workflows/release-please.yaml@main
     if: github.event_name == 'push'
   publish:
     uses: linxsa/gha-workflows/.github/workflows/publisher--helm-chart.yaml@main
